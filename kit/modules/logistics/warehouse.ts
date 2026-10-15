@@ -2,6 +2,13 @@ import { buildByRole, cyl, place, roundedBox, type Part } from '../../parts';
 import { defineElement } from '../../runtime/element';
 import { num } from './common';
 
+/** 도크 x 위치: 중심 대칭, 양 끝 ±0.36w */
+export function dockPositions(w: number, docks: number): number[] {
+  if (docks <= 0) return [];
+  if (docks === 1) return [0];
+  return Array.from({ length: docks }, (_, i) => -w * 0.36 + (i * w * 0.72) / (docks - 1));
+}
+
 /** 창고: 둥근 박스 몸체, 세로 패널 리브(ribs), 앞면(+Z) 도크, 지붕 스카이라이트·설비 */
 export const warehouse = defineElement({
   type: 'warehouse',
@@ -22,8 +29,7 @@ export const warehouse = defineElement({
     }
     parts.push({ role: 'trim', geo: place(roundedBox(1.4, 0.9, 1.2, 0.15), w * 0.38, h, -d * 0.3) });
     parts.push({ role: 'trim', geo: place(roundedBox(1.4, 0.9, 1.2, 0.15), w * 0.38 - 1.8, h, -d * 0.3) });
-    for (let i = 0; i < docks; i++) {
-      const x = docks === 1 ? 0 : -w * 0.32 + (i * w * 0.72) / (docks - 1);
+    for (const x of dockPositions(w, docks)) {
       parts.push({ role: 'dark', geo: place(roundedBox(3.4, 3.7, 0.3, 0.08), x, 0, d / 2) });
       parts.push({ role: 'trim', geo: place(roundedBox(2.8, 3.2, 0.22, 0.05), x, 0, d / 2 + 0.06) });
       parts.push({ role: 'trim', geo: place(roundedBox(1, 0.15, 0.18, 0.04), x, 4.1, d / 2 + 0.05) });

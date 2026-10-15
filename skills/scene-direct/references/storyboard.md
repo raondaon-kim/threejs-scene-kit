@@ -37,7 +37,7 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/storyboard.mjs" --project <폴더> --shot s3
 ```
 
 - 결과: `storyboard/<id>.png`, `storyboard/sheet.png`(2열 시트), `storyboard/log.json`(프롬프트·소요시간 누적).
-- codex 위치: `CODEX_EXE` 환경변수 → PATH의 codex → VS Code/Cursor의 OpenAI 확장 동봉본.
+- codex 위치: `CODEX_EXE` 환경변수 → PATH의 codex(Windows는 .exe 또는 npm 전역 설치를 node로 실행) → VS Code/Cursor의 OpenAI 확장 동봉본.
 - 샷당 보통 1~2분, Codex 사용량을 소모한다. 사용자 승인 없이 전체를 반복 생성하지 않는다.
 
 ## 비교

@@ -65,19 +65,51 @@ function setShadows(obj: THREE.Object3D, cast: boolean, receive: boolean) {
   });
 }
 
-function computeFocus(def: SceneDef): { center: Vec3; radius: number } {
-  const pts: Array<[number, number, number]> = [];
-  for (const el of def.elements ?? []) {
+/** 그림자 초점 원: 각 요소의 기준 위치(at·follow 경로·position 트랙 범위)에 오브젝트 크기(Box3)를 더해 감싼다 */
+function computeFocus(items: Item[]): { center: Vec3; radius: number } {
+  const circles: Array<{ x: number; z: number; r: number; y: number }> = [];
+  const box = new THREE.Box3();
+  for (const { el, h } of items) {
+    h.object3d.updateMatrixWorld(true);
+    box.setFromObject(h.object3d);
+    let cx = 0;
+    let cz = 0;
+    let r = 0;
+    if (!box.isEmpty()) {
+      cx = (box.min.x + box.max.x) / 2;
+      cz = (box.min.z + box.max.z) / 2;
+      r = Math.hypot(box.max.x - box.min.x, box.max.z - box.min.z) / 2;
+    }
     const at = el.at ?? [0, 0, 0];
-    pts.push([at[0], at[1], at[2]]);
-    for (const [x, z] of el.follow?.path ?? []) pts.push([x, at[1], z]);
+    const s = el.scale ?? 1;
+    const range = (key: 'position.x' | 'position.z', d: number) => {
+      const vals = (el.tracks?.[key] ?? []).map((k) => k[1]);
+      return vals.length ? [Math.min(...vals), Math.max(...vals)] : [d, d];
+    };
+    const bases: Array<[number, number]> = [];
+    const [x0, x1] = range('position.x', at[0]);
+    const [z0, z1] = range('position.z', at[2]);
+    for (const x of [x0, x1]) for (const z of [z0, z1]) bases.push([x, z]);
+    for (const [x, z] of el.follow?.path ?? []) bases.push([x, z]);
+    for (const [x, z] of bases) circles.push({ x: x + cx * s, z: z + cz * s, r: r * s, y: at[1] });
   }
-  if (!pts.length) return { center: [0, 0, 0], radius: 20 };
-  const c: Vec3 = [0, 0, 0];
-  for (const p of pts) for (let i = 0; i < 3; i++) c[i] += p[i] / pts.length;
-  let r = 0;
-  for (const p of pts) r = Math.max(r, Math.hypot(p[0] - c[0], p[2] - c[2]));
-  return { center: c, radius: Math.min(140, Math.max(20, r + 8)) };
+  if (!circles.length) return { center: [0, 0, 0], radius: 20 };
+  let minX = Infinity;
+  let maxX = -Infinity;
+  let minZ = Infinity;
+  let maxZ = -Infinity;
+  let y = 0;
+  for (const c of circles) {
+    minX = Math.min(minX, c.x - c.r);
+    maxX = Math.max(maxX, c.x + c.r);
+    minZ = Math.min(minZ, c.z - c.r);
+    maxZ = Math.max(maxZ, c.z + c.r);
+    y += c.y / circles.length;
+  }
+  const center: Vec3 = [(minX + maxX) / 2, y, (minZ + maxZ) / 2];
+  let radius = 0;
+  for (const c of circles) radius = Math.max(radius, Math.hypot(c.x - center[0], c.z - center[2]) + c.r);
+  return { center, radius: Math.min(140, Math.max(20, radius + 2)) };
 }
 
 export function buildWorld(def: SceneDef, opts: { quality: Quality; aspect: number }): { world: World | null; issues: Issue[] } {
@@ -166,6 +198,7 @@ export function buildWorld(def: SceneDef, opts: { quality: Quality; aspect: numb
     return { world: null, issues };
   }
 
+  const focus = computeFocus(items);
   const setTime = (t: number) => {
     const { shot, u } = findShot(def.shots, t);
     const pose = cameraPose(shot.camera, u);
@@ -178,9 +211,14 @@ export function buildWorld(def: SceneDef, opts: { quality: Quality; aspect: numb
       oc.right = hw;
       oc.top = hh;
       oc.bottom = -hh;
+      // ortho는 위치가 방향만 정한다: 장면 앞쪽이 near에 잘리지 않도록 충분히 뒤로 뺀다
       const [px, py, pz] = pose.position;
       const [tx, ty, tz] = pose.target;
-      oc.far = Math.hypot(px - tx, py - ty, pz - tz) + 500;
+      const dist = Math.hypot(px - tx, py - ty, pz - tz) || 1;
+      const back = Math.max(dist, pose.size * 2 + 100);
+      const k = back / dist;
+      camera.position.set(tx + (px - tx) * k, ty + (py - ty) * k, tz + (pz - tz) * k);
+      oc.far = back + 500;
     } else {
       (camera as THREE.PerspectiveCamera).fov = pose.fov;
     }
@@ -230,7 +268,7 @@ export function buildWorld(def: SceneDef, opts: { quality: Quality; aspect: numb
       scene,
       camera,
       sun,
-      focus: computeFocus(def),
+      focus,
       look: style.look,
       setTime,
       dispose() {

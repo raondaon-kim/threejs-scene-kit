@@ -1,22 +1,41 @@
 import { spawn, spawnSync } from 'node:child_process';
 import { existsSync, readdirSync } from 'node:fs';
 import { homedir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { ScriptError } from './output.mjs';
 
 const verKey = (name) => (name.match(/\d+/g) ?? []).map((n) => n.padStart(8, '0')).join('.');
+
+/** npm 전역 설치의 셸 심(codex / codex.cmd) 옆에 있는 실제 JS 진입점 */
+function shimToJs(p) {
+  const js = join(dirname(p), 'node_modules', '@openai', 'codex', 'bin', 'codex.js');
+  return existsSync(js) ? js : null;
+}
+
+/** 실행 가능한 형태로 변환. Windows에서 .exe가 아니면 npm 심을 node+codex.js로 풀고, 안 되면 null (shell:true는 쓰지 않음) */
+function resolveCandidate(p, source) {
+  if (/\.m?js$/i.test(p)) return { cmd: process.execPath, pre: [p], source: `${source}(node)` };
+  if (process.platform !== 'win32' || /\.exe$/i.test(p)) return { cmd: p, pre: [], source };
+  const js = shimToJs(p);
+  return js ? { cmd: process.execPath, pre: [js], source: `${source}(npm)` } : null;
+}
 
 /** codex 실행 파일 찾기: CODEX_EXE → PATH → VS Code/Cursor 확장 동봉본(최신 버전) */
 export function findCodex() {
   const env = process.env.CODEX_EXE;
   if (env) {
     if (!existsSync(env)) throw new ScriptError([{ path: 'codex', message: `CODEX_EXE 경로가 없음: ${env}` }]);
-    return /\.m?js$/i.test(env) ? { cmd: process.execPath, pre: [env], source: 'CODEX_EXE(node)' } : { cmd: env, pre: [], source: 'CODEX_EXE' };
+    const c = resolveCandidate(env, 'CODEX_EXE');
+    if (!c) throw new ScriptError([{ path: 'codex', message: `CODEX_EXE는 .exe 또는 codex.js를 가리켜야 함 (.cmd 심은 옆에 node_modules/@openai/codex가 있어야 함): ${env}` }]);
+    return c;
   }
   const which = spawnSync(process.platform === 'win32' ? 'where' : 'which', ['codex'], { encoding: 'utf8' });
   if (which.status === 0) {
-    const exe = which.stdout.split(/\r?\n/).map((s) => s.trim()).find((s) => s && !/\.(cmd|bat|ps1)$/i.test(s));
-    if (exe) return { cmd: exe, pre: [], source: 'PATH' };
+    for (const line of which.stdout.split(/\r?\n/).map((s) => s.trim()).filter(Boolean)) {
+      if (/\.ps1$/i.test(line)) continue;
+      const c = resolveCandidate(line, 'PATH');
+      if (c) return c;
+    }
   }
   const bin = process.platform === 'win32' ? join('bin', 'windows-x86_64', 'codex.exe') : join('bin', 'linux-x86_64', 'codex');
   for (const base of [join(homedir(), '.vscode', 'extensions'), join(homedir(), '.cursor', 'extensions')]) {

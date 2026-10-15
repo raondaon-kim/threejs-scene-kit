@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import * as THREE from 'three';
 import { getStyle } from '../../kit/styles';
 import { LOGISTICS_ELEMENTS } from '../../kit/modules/logistics';
+import { dockPositions } from '../../kit/modules/logistics/warehouse';
 import { elementRegistry } from '../../kit/runtime/registry';
 import type { KitContext } from '../../kit/runtime/types';
 
@@ -65,6 +66,20 @@ describe('logistics kit', () => {
       return v;
     };
     expect(count({})).toBeGreaterThan(count({ ribs: false }));
+  });
+  it('warehouse 도크는 중심 대칭 (리뷰 I2)', () => {
+    expect(dockPositions(30, 4).map((x) => +x.toFixed(3))).toEqual([-10.8, -3.6, 3.6, 10.8]);
+    expect(dockPositions(30, 1)).toEqual([0]);
+    const h = byType.warehouse.create(ctx, { width: 30, docks: 4, ribs: false });
+    const dark = h.object3d.getObjectByName('dark') as THREE.Mesh;
+    dark.geometry.computeBoundingBox();
+    const bb = dark.geometry.boundingBox!;
+    const front = new THREE.Box3();
+    const pos = dark.geometry.attributes.position;
+    for (let i = 0; i < pos.count; i++) if (pos.getZ(i) > 6.9) front.expandByPoint(new THREE.Vector3(pos.getX(i), pos.getY(i), pos.getZ(i)));
+    expect(front.min.x).toBeCloseTo(-front.max.x, 1);
+    void bb;
+    h.dispose();
   });
   it('lot: role 지정', () => {
     const h = byType.lot.create(ctx, { role: 'neutral' });

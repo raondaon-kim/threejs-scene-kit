@@ -126,3 +126,39 @@ describe('v0.2 world', () => {
     world!.dispose();
   });
 });
+
+describe('v0.2 리뷰 수정', () => {
+  const base = (): SceneDef => ({
+    meta: { width: 1920, height: 1080, fps: 30, duration: 4, seed: 1, projection: 'ortho' },
+    style: 'clay',
+    environment: { ground: {} },
+    elements: [],
+    shots: [{ id: 'a', start: 0, end: 4, camera: { move: 'static', pos: [4.5, 6.7, 7.8], target: [0, 0, 0], size: 60 } }],
+  });
+  it('focus가 position 트랙·road 점·오브젝트 크기를 포함 (리뷰 I3)', () => {
+    const def = base();
+    def.elements = [
+      { id: 'mover', type: 'shape', at: [0, 0, 0], tracks: { 'position.x': [[0, 0], [4, 60]] } },
+      { id: 'road', type: 'road', params: { points: [[-90, 0], [-80, 0]] } },
+      { id: 'wh', type: 'warehouse', at: [0, 0, 0], params: { width: 40, depth: 10 } },
+    ];
+    const { world } = buildWorld(def, { quality: 'preview', aspect: 16 / 9 });
+    const { center, radius } = world!.focus;
+    const reach = (x: number, z: number) => Math.hypot(x - center[0], z - center[2]) <= radius;
+    expect(reach(60, 0)).toBe(true);
+    expect(reach(-90, 0)).toBe(true);
+    world!.dispose();
+  });
+  it('ortho 카메라는 가까운 pos여도 앞쪽을 자르지 않음 (리뷰 I4)', () => {
+    const { world } = buildWorld(base(), { quality: 'preview', aspect: 16 / 9 });
+    world!.setTime(0);
+    const cam = world!.camera as THREE.OrthographicCamera;
+    const dist = cam.position.length();
+    // 화면 아래 끝(세로 반폭 30)을 포함하려면 near 기준 거리가 충분해야 한다
+    expect(dist - cam.near).toBeGreaterThan(60);
+    // 방향은 유지
+    const dir = cam.position.clone().normalize();
+    expect(dir.x / dir.z).toBeCloseTo(4.5 / 7.8, 3);
+    world!.dispose();
+  });
+});
