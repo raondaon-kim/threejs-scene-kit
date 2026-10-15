@@ -71,6 +71,31 @@ describe('storyboard.mjs (가짜 codex)', () => {
     writeFileSync(join(dir, 'scene.ts'), "export default { meta: { projection: 'ortho' }, elements: [{ id: 'w', type: 'warehouse' }] };\n");
     expect(run(['--project', dir, '--shot', 's1']).out.warnings).toEqual([]);
   });
+  const sbWith = (extra, shots = [{ id: 's1', prompt: 'a' }]) => writeFileSync(join(dir, 'storyboard.json'), JSON.stringify({ aspect: '16:9', style: 'clay', ...extra, shots }));
+  it('kit: concept → 개념 요소 목록, text 허용, 템플릿 장면에 vocab 경고 없음', () => {
+    sbWith({ kit: 'concept' });
+    const { code, out } = run(['--project', dir]);
+    expect(code).toBe(0);
+    const p = prompts().s1;
+    expect(p).toMatch(/^Objects: .*3D bar charts/m);
+    expect(p).not.toMatch(/warehouse/);
+    expect(p).not.toMatch(/Do not include:.*\btext\b/);
+    expect(out.warnings.join('\n')).not.toMatch(/vocab/);
+  });
+  it('kit 배열: 합집합 + 금지 교집합 (Review Focus 1)', () => {
+    sbWith({ kit: ['logistics', 'concept'] });
+    run(['--project', dir]);
+    const p = prompts().s1;
+    expect(p).toMatch(/warehouse.*3D bar charts/);
+    expect(p).toMatch(/Do not include: people, logos\.$/m);
+  });
+  it.each([[[]], [3], [['logistics', 'nope']], ['nope']])('잘못된 kit %j → storyboard.kit 오류 + 사용 가능 목록 (Review Focus 5)', (kit) => {
+    sbWith({ kit });
+    const { code, out } = run(['--project', dir]);
+    expect(code).toBe(1);
+    const e = out.errors.find((x) => x.path === 'storyboard.kit');
+    expect(e.message).toMatch(/concept, logistics/);
+  });
   it('잘못된 vocab/camera 값 거부', () => {
     writeFileSync(join(dir, 'storyboard.json'), JSON.stringify({ aspect: '16:9', style: 'clay', vocab: 'all', shots: [{ id: 's1', prompt: 'a', camera: 'top' }] }));
     const { code, out } = run(['--project', dir]);
