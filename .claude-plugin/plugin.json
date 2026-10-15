@@ -1,6 +1,6 @@
 {
   "name": "threejs-scene-kit",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "license": "MIT",
   "description": "대화와 Codex 스토리보드로 연출하는 고품질 Three.js 짧은 영상(쇼츠·강의) 제작 키트: 클레이 아이소메트릭 물류·도시 키트 + 장면 데이터 + 타임라인 미리보기 + preview/final MP4 렌더",
   "author": {

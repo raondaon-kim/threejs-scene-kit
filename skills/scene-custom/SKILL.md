@@ -1,6 +1,6 @@
 ---
 name: scene-custom
-description: threejs-scene-kit의 내장 요소(shape, label, arrow, bars, line)와 scene.ts 데이터로 표현할 수 없는 연출이 필요할 때만 사용. custom/ 폴더에 규약을 따르는 요소를 작성하고 scene.ts의 custom에 등록한다. 기존 요소의 params, tracks, 조합으로 가능한지 먼저 확인할 것.
+description: threejs-scene-kit의 내장 요소(shape, label, arrow, bars, line)와 scene.ts 데이터로 표현할 수 없는 연출이 필요할 때만 사용. custom/ 폴더에 규약을 따르는 요소를 작성하고 scene.ts의 custom에 등록한다. 내장 질감으로 부족한 표면은 p5.js 커스텀 텍스처(customTextures)로 만든다. 기존 요소의 params, tracks, 조합으로 가능한지 먼저 확인할 것.
 ---
 
 # 커스텀 요소
@@ -64,3 +64,37 @@ export default defineScene({ ..., custom: [spiral],
 - type 이름이 내장 요소와 겹치면 check 오류.
 - 작성 후 `check.mjs` → `still.mjs --sheet`로 확인. `path: console` 오류는 이 파일의 런타임 오류다.
 - `kit/`은 수정하지 않는다. 쓸 만한 커스텀 요소는 플러그인에 테스트와 함께 추가하는 것을 사용자에게 제안한다.
+
+## 커스텀 텍스처 (p5.js)
+
+내장 질감(scene-modules `references/textures.md`)으로 부족할 때만. 회색조(평균 ≈ 128)로 그리면 팔레트 색에 명암만 곱해진다.
+
+```ts
+// custom/textures/moss.ts
+import { defineTexture } from '../../kit/textures';
+import { fillPixels, tileNoise, wrap } from '../../kit/textures/draw-utils';
+
+export default defineTexture({
+  name: 'moss',            // 영문 소문자·숫자·대시, 내장과 겹치면 오류
+  tile: 3,                 // 한 장이 덮는 길이(m)
+  draw(p, { size }) {
+    fillPixels(p, size, (x, y) => 128 + (tileNoise(p, x, y, size, 8) - 0.5) * 70);   // 이어지는 노이즈
+    p.noStroke();
+    for (let i = 0; i < 300; i++) {
+      const x = p.random(size), y = p.random(size), r = p.random(2, 6);
+      p.fill(p.random(90, 170));
+      wrap(size, (dx, dy) => p.circle(x + dx, y + dy, r));                          // 가장자리 넘는 획은 반대편에도
+    }
+  },
+});
+```
+
+```ts
+// scene.ts
+import moss from './custom/textures/moss';
+export default defineScene({ ..., customTextures: [moss], look: { surfaces: { ground: 'moss' } } });
+```
+
+- 결정성: 호출 전에 `randomSeed`·`noiseSeed`가 설정된다. `p.random`·`p.noise`만 쓴다. `frameCount`·`millis`·`Math.random` 금지(렌더마다 달라짐).
+- 이음매: 픽셀 노이즈는 `tileNoise`, 획은 `wrap`으로 그리면 반복 경계가 이어진다.
+- 확인: `swatch.mjs --project <폴더>` → `out/swatch.png`(2×2로 이어 붙여 이음선 확인).

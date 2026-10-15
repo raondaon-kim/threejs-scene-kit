@@ -75,7 +75,7 @@ function probe(c: HTMLCanvasElement) {
 
 async function composeSwatch(def: SceneDef, provider: ReturnType<typeof createP5Provider>) {
   void provider;
-  const defs = [...textureRegistry().values()];
+  const defs = [...textureRegistry(def.customTextures ?? []).values()];
   const cell = 256;
   const cols = 4;
   const label = 22;
@@ -132,13 +132,7 @@ export function boot(def: SceneDef): void {
     } catch (e) {
       return { ok: false, errors: [{ path: 'custom', message: (e as Error).message }] };
     }
-    let textureNames: string[];
-    try {
-      textureNames = [...textureRegistry(def?.customTextures ?? []).keys()];
-    } catch (e) {
-      return { ok: false, errors: [{ path: 'customTextures', message: (e as Error).message }] };
-    }
-    const errors = validateScene(def, types, textureNames);
+    const errors = validateScene(def, types);
     if (errors.length) return { ok: false, errors };
     await document.fonts.load('700 64px "Malgun Gothic"').catch(() => undefined);
     await document.fonts.ready;
@@ -198,7 +192,7 @@ export function boot(def: SceneDef): void {
     gpu: () => pipeline?.gpu() ?? 'none',
     swatch: () => composeSwatch(def, provider),
     textureProbe: (name, seed) => {
-      const d = textureRegistry().get(name);
+      const d = textureRegistry(def.customTextures ?? []).get(name);
       if (!d) throw new Error(`알 수 없는 텍스처 '${name}'`);
       return probe(paintWithP5(SURFACE_SIZE, SURFACE_SIZE, seed, (p) => d.draw(p, { seed, size: SURFACE_SIZE })));
     },

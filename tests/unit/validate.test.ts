@@ -173,3 +173,15 @@ describe('v0.4 background 검증', () => {
   });
 });
 
+describe('v0.4 customTextures 검증', () => {
+  const tex = (name: unknown, tile: unknown = 2, draw: unknown = () => {}) => ({ name, tile, draw });
+  it('형식·이름 충돌 오류 경로 customTextures[i], 커스텀 이름은 look에서 허용', () => {
+    const bad = { ...good(), customTextures: [tex('Bad'), tex('paper'), tex('mine', 0), tex('x', 1, 5), tex('dup'), tex('dup')] };
+    const p = paths(bad);
+    expect(p).toEqual(expect.arrayContaining(['customTextures[0]', 'customTextures[1]', 'customTextures[2]', 'customTextures[3]', 'customTextures[5]']));
+    expect(p).not.toContain('customTextures[4]');
+    expect(paths({ ...good(), customTextures: [tex('moss')], look: { surfaces: { ground: 'moss' } } })).toEqual([]);
+    expect(paths({ ...good(), customTextures: 'x' })).toContain('customTextures');
+  });
+});
+

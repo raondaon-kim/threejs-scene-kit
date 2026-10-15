@@ -96,6 +96,26 @@ describe('init / update', () => {
     expect(readFileSync(join(dir, 'scene.ts'), 'utf8')).toBe('// mine');
   });
 
+  it('update: 템플릿 의존성 중 없는 것(p5)을 package.json에 추가하고 install 안내 (v0.4)', () => {
+    runScript('init.mjs', [dir]);
+    const pkgFile = join(dir, 'package.json');
+    const pkg = JSON.parse(readFileSync(pkgFile, 'utf8'));
+    delete pkg.dependencies.p5;
+    delete pkg.devDependencies['@types/p5'];
+    pkg.dependencies.lodash = '1.0.0';
+    writeFileSync(pkgFile, JSON.stringify(pkg, null, 2));
+    const r = runScript('update.mjs', ['--project', dir]);
+    expect(r.out.ok).toBe(true);
+    expect(r.out.install).toBe(true);
+    expect(r.out.addedDeps).toEqual(expect.arrayContaining(['p5', '@types/p5']));
+    expect(r.out.next.join(' ')).toMatch(/npm install/);
+    const after = JSON.parse(readFileSync(pkgFile, 'utf8'));
+    expect(after.dependencies.p5).toBe('1.11.13');
+    expect(after.dependencies.lodash).toBe('1.0.0');
+    const again = runScript('update.mjs', ['--project', dir]);
+    expect(again.out.install).toBe(false);
+  });
+
   it('--help는 사용법 출력 후 exit 0', () => {
     const r = spawnSync(process.execPath, [join(ROOT, 'scripts', 'init.mjs'), '--help'], { encoding: 'utf8' });
     expect(r.status).toBe(0);

@@ -267,6 +267,26 @@ function validateShots(shots: unknown, duration: number, err: Err) {
   }
 }
 
+/** customTextures: defineTexture 결과 배열. 유효한 커스텀 이름을 돌려준다 */
+function validateCustomTextures(v: unknown, builtin: readonly string[], err: Err): string[] {
+  if (v === undefined) return [];
+  if (!Array.isArray(v)) {
+    err('customTextures', 'defineTexture로 만든 텍스처 배열이어야 함');
+    return [];
+  }
+  const names: string[] = [];
+  v.forEach((t, i) => {
+    const p = `customTextures[${i}]`;
+    if (!isObj(t)) return err(p, 'defineTexture({ name, tile, draw })의 결과여야 함');
+    if (typeof t.name !== 'string' || !/^[a-z0-9-]+$/.test(t.name)) return err(p, 'name은 영문 소문자·숫자·대시');
+    if (builtin.includes(t.name) || names.includes(t.name)) return err(p, `'${t.name}' 이름이 겹침 (내장: ${list(builtin)})`);
+    if (!isNum(t.tile) || t.tile <= 0) return err(p, 'tile은 0보다 큰 숫자(m)');
+    if (typeof t.draw !== 'function') return err(p, 'draw(p, { seed, size }) 함수가 필요함');
+    names.push(t.name);
+  });
+  return names;
+}
+
 function validateLook(look: unknown, textures: readonly string[], err: Err) {
   if (look === undefined) return;
   if (!isObj(look)) return err('look', '객체여야 함');
@@ -324,7 +344,8 @@ export function validateScene(input: unknown, types: Map<string, TypeInfo>, text
   }
   oneOf(err, 'style', input.style, STYLE_NAMES);
   validateEnvironment(input.environment, err);
-  validateLook(input.look, textures, err);
+  const custom = validateCustomTextures(input.customTextures, textures, err);
+  validateLook(input.look, [...textures, ...custom], err);
   validateElements(input.elements, types, duration, err);
   validateShots(input.shots, duration, err);
   if (input.custom !== undefined && !Array.isArray(input.custom)) err('custom', '배열이어야 함');

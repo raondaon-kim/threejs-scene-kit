@@ -63,6 +63,15 @@ description: threejs-scene-kit 장면에 넣을 수 있는 요소와 환경의 �
 - 라벨은 AO·그림자 영향 없이 항상 위에 그려진다.
 - 상세 params: `references/<type>.md`
 
+## 표면 질감 · 디테일 (모든 키트 공통)
+
+| 기능 | 쓰는 곳 | 요점 |
+|---|---|---|
+| 표면 질감 (p5.js) | `look: { surfaces: { ground: 'grass-brush', … }, strength }` | 내장 7종, role별. pastel은 기본 켜짐. `references/textures.md` |
+| 메쉬 그라디언트 배경 | `environment.background: { kind: 'meshGradient', preset, sun }` | 화면 배경, 구형 하늘 대신 |
+| grass | 요소 `{ type: 'grass', params: { center, radius, count, avoid } }` | 인스턴싱 풀포기(최대 20000), 강·길 points를 avoid로 비움 |
+| scatter | `import { scatter } from './kit/layout'` → `elements: [...scatter({ type, count, center, radius, seed, minDist, avoid })]` | 나무·꽃·바위 흩뿌리기(반복문·해시 대신), variant 자동 |
+
 ## 환경 (environment)
 
 | 키 | 내용 |
