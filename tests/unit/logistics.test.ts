@@ -56,6 +56,22 @@ describe('logistics kit', () => {
     expect(c.position.y).toBe(y0);
     h.dispose();
   });
+  it('warehouse: ribs on/off가 지오메트리를 바꿈', () => {
+    const count = (p: Record<string, unknown>) => {
+      const h = byType.warehouse.create(ctx, p);
+      let v = 0;
+      h.object3d.traverse((o) => { const m = o as THREE.Mesh; if (m.isMesh) v += m.geometry.attributes.position.count; });
+      h.dispose();
+      return v;
+    };
+    expect(count({})).toBeGreaterThan(count({ ribs: false }));
+  });
+  it('lot: role 지정', () => {
+    const h = byType.lot.create(ctx, { role: 'neutral' });
+    const mesh = h.object3d.getObjectByName('neutral') as THREE.Mesh;
+    expect(mesh).toBeDefined();
+    h.dispose();
+  });
   it('잘못된 params', () => {
     expect(() => byType.pallet.create(ctx, { cargo: 'gold' })).toThrow(/boxes/);
     expect(() => byType.container.create(ctx, { length: 7 })).toThrow();

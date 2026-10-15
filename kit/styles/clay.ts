@@ -4,8 +4,8 @@ import type { Role, SkyPreset } from '../runtime/types';
 
 /** movie2 계열: 아이소메트릭 클레이, 파랑·흰색 단색 팔레트 */
 const PALETTE: Record<Role, string> = {
-  ground: '#e6e9fb',
-  road: '#d0d8f4',
+  ground: '#d6dcf6',
+  road: '#a9b3dc',
   body: '#3f6cf0',
   bodyLight: '#94adf7',
   trim: '#ffffff',
@@ -18,7 +18,7 @@ const PALETTE: Record<Role, string> = {
   foliage: '#6f8ff0',
   trunk: '#8a93c2',
   water: '#9db8f5',
-  neutral: '#ffffff',
+  neutral: '#eef0fc',
   label: '#1d2550',
 };
 
@@ -30,8 +30,8 @@ const BASE: SkyColors = {
   fog: '#e8eafb',
   ambient: '#eef0ff',
   sunIntensity: 2.6,
-  ambientIntensity: 1.25,
-  sunDir: [0.55, 0.85, 0.35],
+  ambientIntensity: 0.55,
+  sunDir: [-0.45, 0.85, 0.5],
 };
 
 const SKIES: Record<SkyPreset, SkyColors> = {
@@ -44,16 +44,16 @@ const SKIES: Record<SkyPreset, SkyColors> = {
 const LOOK: Look = {
   shadows: true,
   ao: { intensity: 1, radius: 0.9 },
-  bloom: { strength: 0.25, radius: 0.4, threshold: 0.9 },
+  bloom: null,
   toneMapping: 'neutral',
-  envIntensity: 0.45,
+  envIntensity: 0.22,
 };
 
 export const clay: Style = {
   name: 'clay',
   look: LOOK,
   palette: PALETTE,
-  fogDensity: 0.0025,
+  fogDensity: 0.0006,
   labelFont: FONT_STACK,
   sky: (p) => SKIES[p],
   material(role: Role, o: MaterialOpts = {}) {

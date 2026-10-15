@@ -2,7 +2,7 @@ import { buildByRole, cyl, place, roundedBox, type Part } from '../../parts';
 import { defineElement } from '../../runtime/element';
 import { num } from './common';
 
-/** 창고: 둥근 박스 몸체, 앞면(+Z) 도크, 지붕 스카이라이트·설비 */
+/** 창고: 둥근 박스 몸체, 세로 패널 리브(ribs), 앞면(+Z) 도크, 지붕 스카이라이트·설비 */
 export const warehouse = defineElement({
   type: 'warehouse',
   create(ctx, params) {
@@ -12,6 +12,10 @@ export const warehouse = defineElement({
     const docks = Math.max(0, Math.round(num(params.docks, 4)));
     const skylights = Math.max(0, Math.round(num(params.skylights, 3)));
     const parts: Part[] = [{ role: 'body', geo: roundedBox(w, h, d, 0.8) }];
+    if (params.ribs !== false) {
+      for (let x = -w / 2 + 1.2; x <= w / 2 - 1.2; x += 1.5) parts.push({ role: 'body', geo: place(roundedBox(0.14, h - 0.9, 0.12, 0.04), x, 0.2, d / 2 + 0.02) });
+      for (let z = -d / 2 + 1.2; z <= d / 2 - 1.2; z += 1.5) parts.push({ role: 'body', geo: place(roundedBox(0.12, h - 0.9, 0.14, 0.04), w / 2 + 0.02, 0.2, z) });
+    }
     for (let i = 0; i < skylights; i++) {
       const x = -w * 0.32 + (skylights === 1 ? w * 0.32 : (i * w * 0.64) / (skylights - 1));
       parts.push({ role: 'trim', geo: place(roundedBox(w * 0.12, 0.35, d * 0.3, 0.12), x, h, -d * 0.05) });
