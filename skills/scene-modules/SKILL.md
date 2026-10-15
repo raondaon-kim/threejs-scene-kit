@@ -23,6 +23,7 @@ description: threejs-scene-kit 장면에 넣을 수 있는 요소와 환경의 �
 | building | 사무 건물 | width, depth, floors | – |
 
 - 원점은 바닥 중심, 단위 m. 움직임은 `follow`(경로 이동, 바퀴 자동 회전)와 `tracks: {'param.lift': …}`.
+- 좌표 손계산 금지: 도크·트럭 정차·후진 경로·차선은 `import { warehouseAnchors, lane } from './kit/anchors'` (logistics.md 앵커 섹션).
 - 상세·배치 공식·예시: `references/logistics.md`
 
 ## 개념 요소

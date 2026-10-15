@@ -53,8 +53,8 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/render.mjs" --project <폴더> --quality fin
 | "제목을 1초 늦게" | 해당 요소 `enter.t` +1 |
 | "아이소메트릭으로" | `meta.projection: 'ortho'` + 샷 카메라 `size`(화면 세로 m) |
 | "천천히 줌인" | 샷 카메라 `size: 40, sizeTo: 30` |
-| "트럭이 도로를 따라 달리게" | 요소 `follow: { path: [[x,z],…], t0, t1 }` (진행 방향을 자동으로 향함) |
-| "도크로 후진" | `follow` 경로를 도크 쪽으로 + `rotation: [0, 180, 0]` |
+| "트럭이 도로를 따라 달리게" | 도로 points를 상수로 두고 `follow: { path: lane(ROAD, 1.6), t0, t1 }` (진행 방향을 자동으로 향함) |
+| "도크로 후진" | `const b = wh.backIn(i)` → `at: b.at, rotation: b.rotation, follow: { path: b.path, t0, t1 }` |
 | "지게차가 짐을 들어 올리게" | `tracks: { 'param.lift': [[t,0],[t+1.5,0.8]] }` |
 | "컷 없이 이어서 날아가듯" | 샷 카메라 `move: 'path'`, `points`, `target` |
 | "전체를 클레이 룩으로" | `style: 'clay'`, `environment: { ground: {} }` |

@@ -46,4 +46,15 @@ describe('skills', () => {
     const mods = readFileSync(join(ROOT, 'skills', 'scene-modules', 'SKILL.md'), 'utf8');
     for (const t of ['warehouse', 'truck', 'forklift', 'pallet', 'container', 'road', 'lot', 'tree', 'pin', 'building']) expect(mods).toContain(t);
   });
+  it('앵커·스토리보드 제약 문서', () => {
+    const lg = readFileSync(join(ROOT, 'skills', 'scene-modules', 'references', 'logistics.md'), 'utf8');
+    for (const k of ['warehouseAnchors', '.dock(', '.truck(', '.backIn(', 'lane(', "from './kit/anchors'"]) expect(lg).toContain(k);
+    const mods = readFileSync(join(ROOT, 'skills', 'scene-modules', 'SKILL.md'), 'utf8');
+    expect(mods).toContain('kit/anchors');
+    const direct = readFileSync(join(ROOT, 'skills', 'scene-direct', 'SKILL.md'), 'utf8');
+    expect(direct).toContain('wh.backIn');
+    expect(direct).toContain('lane(');
+    const sb = readFileSync(join(ROOT, 'skills', 'scene-direct', 'references', 'storyboard.md'), 'utf8');
+    for (const k of ['"vocab"', '"camera"', '"free"', 'Objects:', 'Camera:']) expect(sb).toContain(k);
+  });
 });

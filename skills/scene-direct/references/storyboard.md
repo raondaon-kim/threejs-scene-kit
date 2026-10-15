@@ -23,9 +23,29 @@ Codex CLI(`codex exec`)의 이미지 생성으로 샷별 콘셉트 이미지를 
 | shots[].at | `still --compare`에서 렌더할 장면 시각(초). 보통 해당 scene 샷의 중간 |
 | shots[].prompt | 샷 내용(영문). 등장 오브젝트·카메라 거리·배치를 구체적으로 |
 
+## 자동 제약 (기본 켜짐)
+
+모든 샷 프롬프트에 두 줄이 자동으로 들어간다 (Style 뒤, Content 앞).
+
+- `Camera:` 렌더와 같은 고정 아이소 카메라 (ortho, 정면 오른쪽 30°, 고도 약 37° = `target + [45, 67, 78]`)
+- `Objects:` 키트에 있는 물체만 허용 + 승용차·사람·글자·원경 마을·물·다리 금지
+
+끄기 (전역 또는 샷 단위, 샷 값 우선):
+
+```json
+{ "vocab": "free", "camera": "free", "shots": [{ "id": "s3", "prompt": "...", "camera": "iso" }] }
+```
+
+| 필드 | 값 | 기본 |
+|---|---|---|
+| vocab | `"kit"` \| `"free"` | `"kit"` |
+| camera | `"iso"` \| `"free"` | `"iso"` |
+
+실제로 들어간 프롬프트는 `storyboard/log.json`에서 확인한다.
+
 ## 작성 요령
 
-- **키트에 있는 것만 등장시킨다**: 창고, 트럭, 지게차, 팔레트(상자·파란 상자), 컨테이너, 도로, 주차장/마당, 나무, 지도 핀, 사무 건물. 사람·자동차 승용차·글자는 피한다(키트에 없음).
+- 키트 목록은 자동으로 들어가므로 prompt에는 배치·카메라 거리(wide establishing / closer / close-up)만 구체적으로 쓴다.
 - 샷마다 카메라 거리를 명시: wide establishing / closer / close-up.
 - clay 스타일 문구 예시는 위 style을 그대로 쓴다. 색을 바꾸려면 style과 scene의 style(팔레트)을 함께 바꾼다.
 
