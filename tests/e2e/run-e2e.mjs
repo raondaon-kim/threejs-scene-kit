@@ -217,9 +217,10 @@ const RIVER: XZ[] = [[0, -8], [-1, 0], [1, 8], [FALL.at[0], FALL.at[2]]];
 export default defineScene({
   meta: { width: 1920, height: 1080, fps: 30, duration: 4, seed: 4 },
   style: 'pastel',
-  environment: { sky: { preset: 'day' } },
+  environment: { sky: { preset: 'day' }, background: { kind: 'meshGradient', preset: 'sunset', sun: true } },
   elements: [
     { id: 'island', type: 'island', params: { radius: 16, depth: 12, floaters: 4 } },
+    { id: 'grass', type: 'grass', params: { radius: 15, count: 3000, avoid: [RIVER], avoidWidth: 3.6 } },
     { id: 'plateau', type: 'plateau', at: [0, 0, -10], params: { radius: 5, height: 4 } },
     { id: 'castle', type: 'castle', at: [0, 4, -11], params: { size: 7 } },
     { id: 'river', type: 'river', params: { points: RIVER, width: 2.4 } },
