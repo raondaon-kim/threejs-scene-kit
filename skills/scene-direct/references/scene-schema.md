@@ -18,15 +18,17 @@ export default defineScene({ meta, style, environment?, elements?, shots, custom
 | fps | 숫자 | 보통 30 |
 | duration | 초 | 영상 길이. 마지막 샷의 end와 같아야 함 |
 | seed | 정수 | 지형·나무 배치의 시드. 바꾸면 다른 풍경 |
+| projection | 'perspective' \| 'ortho' | 기본 perspective. ortho는 아이소메트릭(카메라 `size`로 화면 크기) |
 
 ## style (필수)
 
-`'stylized'`(툰 셰이딩, 따뜻한 색) 또는 `'minimal'`(중립색, 부드러운 조명). 같은 장면을 스타일만 바꿔 렌더할 수 있다.
+`'stylized'`(툰 셰이딩, 따뜻한 색), `'minimal'`(중립색, 부드러운 조명), `'clay'`(movie2풍 파랑·흰색 클레이, 부드러운 그림자·AO·IBL). 같은 장면을 스타일만 바꿔 렌더할 수 있다.
 
 ## environment (선택)
 
 | 필드 | 기본값 | 설명 |
 |---|---|---|
+| ground | 없음 | `{ size: 400 }` 평평한 바닥판(그림자 받음) |
 | sky.preset | `'day'` | dawn, day, dusk, night |
 | terrain | 없음 | 있으면 지형 생성. `{ size: 200, height: 10, roughness: 0.5, flatRadius: 15 }` |
 | trees | 없음 | `{ count: 250, area: 160, avoidCenter: 18 }`. 지형 높이에 맞춰 배치 |
@@ -46,7 +48,8 @@ environment를 통째로 생략하면 하늘만 있는 빈 무대가 된다.
 | params | 요소별 설정 (scene-modules 스킬). `role`로 색 역할 지정: accent, accent2, accent3, neutral, label |
 | enter | `{ t, anim, dur? }` 등장. 없으면 처음부터 보임 |
 | exit | `{ t, anim, dur? }` 퇴장. 없으면 끝까지 보임 |
-| tracks | 속성 키프레임 |
+| tracks | 속성 키프레임 (`param.<이름>`은 요소의 animatable 파라미터) |
+| follow | `{ path: [[x,z],…], t0, t1, ease? }` 경로 이동: x·z와 진행 방향을 정하고 이동 거리로 바퀴를 굴림 |
 
 ### 애니메이션 (enter/exit의 anim)
 
@@ -70,6 +73,9 @@ environment를 통째로 생략하면 하늘만 있는 빈 무대가 된다.
 | rotation.x / .y / .z | 절대 회전(도) |
 | scale | 절대 배율 |
 | opacity | 투명도 배율(등장 효과와 곱함) |
+| param.<이름> | 요소 파라미터 (예: forklift의 `param.lift`) |
+
+follow가 있으면 `position.x/z` 트랙은 쓸 수 없다. `rotation.y`는 진행 방향에 더해진다(후진: 180).
 
 ## shots (필수)
 
@@ -81,8 +87,9 @@ environment를 통째로 생략하면 하늘만 있는 빈 무대가 된다.
 | dolly | from, to, target, targetTo? | inOut |
 | crane | from, to, target, targetTo? | out |
 | orbit | center, radius, height, fromDeg, toDeg | inOut |
+| path | points(Vec3 2개 이상), target 또는 targets | inOut |
 
-공통: `ease`(linear, in, out, inOut), `fov`(기본 40, 10~120).
+공통: `ease`(linear, in, out, inOut), `fov`(perspective, 기본 40, 10~120), `size`·`sizeTo`(ortho 화면 세로 높이 m, 기본 30 — 샷 안에서 보간되어 줌).
 orbit 각도 0도는 +z 방향(정면), 90도는 +x 방향.
 
 ## custom (선택)

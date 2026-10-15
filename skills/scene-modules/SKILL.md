@@ -1,13 +1,31 @@
 ---
 name: scene-modules
-description: threejs-scene-kit 장면에 넣을 수 있는 요소와 환경의 카탈로그. scene.ts의 elements나 environment를 작성·수정할 때 type과 params를 확인하는 용도. 도형(shape), 텍스트 라벨(label, 한글 지원), 화살표(arrow), 막대그래프(bars), 곡선(line), 지형·하늘·나무·물.
+description: threejs-scene-kit 장면에 넣을 수 있는 요소와 환경의 카탈로그. scene.ts의 elements나 environment를 작성·수정할 때 type과 params를 확인하는 용도. 물류·도시 키트(warehouse, truck, forklift, pallet, container, road, lot, tree, pin, building), 개념 요소(shape, label 한글 지원, arrow, bars, line), 지형·하늘·나무·물·바닥.
 ---
 
 # 모듈 카탈로그
 
 모든 요소는 검증된 코드로 이미 프로젝트 `kit/`에 들어 있다. 소스를 읽지 말고 아래 표와 references만 본다.
 
-## 요소 (elements[].type)
+## 물류·도시 키트 (clay 스타일과 함께 쓰는 movie2풍 아이소메트릭)
+
+| type | 용도 | 주요 params | animatable |
+|---|---|---|---|
+| warehouse | 창고 + 앞면(+Z) 도크 | width, depth, height, docks, skylights, ribs | – |
+| truck | 트럭 (+Z가 앞) | kind(box, van), length | travel |
+| forklift | 지게차 | lift(0~1), load | lift, travel |
+| pallet | 팔레트 + 적재물 | cargo(boxes, crates, none), rows, cols, layers | – |
+| container | 해운 컨테이너 | length(6, 12) | – |
+| road | 곡선 도로 (절대 좌표) | points [[x,z]…], width, dashes | – |
+| lot | 마당·주차장 | width, depth, stalls, role | – |
+| tree | 나무 | kind(round, cone), height, pad | – |
+| pin | 지도 핀 (카메라를 향함) | size, bob | – |
+| building | 사무 건물 | width, depth, floors | – |
+
+- 원점은 바닥 중심, 단위 m. 움직임은 `follow`(경로 이동, 바퀴 자동 회전)와 `tracks: {'param.lift': …}`.
+- 상세·배치 공식·예시: `references/logistics.md`
+
+## 개념 요소
 
 | type | 용도 | 주요 params | grow |
 |---|---|---|---|
@@ -17,29 +35,24 @@ description: threejs-scene-kit 장면에 넣을 수 있는 요소와 환경의 �
 | bars | 막대그래프 | values, labels, maxHeight, width, gap, roles | ✓ |
 | line | 곡선 튜브 | points(상대 좌표 2개 이상), radius, role | ✓ |
 
-- `role` 값: accent, accent2, accent3, neutral, label. 실제 색은 스타일이 정한다.
-- grow ✓ 요소만 `anim: 'grow'`를 쓸 수 있다.
+- 라벨은 AO·그림자 영향 없이 항상 위에 그려진다.
 - 상세 params: `references/<type>.md`
 
 ## 환경 (environment)
 
 | 키 | 내용 |
 |---|---|
+| ground | 평평한 바닥판 (clay 장면 권장). size |
 | sky | 그라데이션 하늘. preset: dawn, day, dusk, night |
 | terrain | 시드 기반 지형. 중앙 flatRadius는 평평한 무대 |
-| trees | 로우폴리 나무 숲. 바람에 흔들림 |
+| trees | 로우폴리 숲(환경용, 개별 tree 요소와 별개) |
 | water | 물결치는 수면 |
 
 상세: `references/environment.md`
 
-## 스타일별 색 (role → 색)
+## role (색 역할)
 
-| role | stylized | minimal |
-|---|---|---|
-| accent | 주황 #ff7a59 | 파랑 #2f6df6 |
-| accent2 | 노랑 #ffd166 | 주황 #f2a541 |
-| accent3 | 청록 #5ec2b7 | 초록 #16a085 |
-| neutral | 아이보리 #f2efe9 | 흰색 #ffffff |
-| label | 남색 #2b2d42 | 검정 #1d1d1f |
+`body`, `bodyLight`, `trim`, `dark`, `road`, `cargo`, `wood`, `accent`, `accent2`, `accent3`, `neutral`, `label`, `ground`, `foliage`, `trunk`, `water`.
+실제 색은 스타일이 정한다. clay: body 파랑 #3f6cf0, bodyLight #94adf7, trim 흰색, dark 남색 #27315c, accent 노랑 #ffb020, cargo 종이상자 #d2a679.
 
 없는 요소가 필요하면 scene-custom 스킬을 쓴다.

@@ -35,8 +35,15 @@ describe('skills', () => {
     });
   }
   it('모든 내장 요소의 reference 문서 존재', () => {
-    for (const t of ['shape', 'label', 'arrow', 'bars', 'line', 'environment']) {
+    for (const t of ['shape', 'label', 'arrow', 'bars', 'line', 'environment', 'logistics']) {
       expect(existsSync(join(ROOT, 'skills', 'scene-modules', 'references', `${t}.md`))).toBe(true);
     }
+  });
+  it('v0.2: storyboard 레퍼런스와 SKILL 명령', () => {
+    expect(existsSync(join(ROOT, 'skills', 'scene-direct', 'references', 'storyboard.md'))).toBe(true);
+    const md = readFileSync(join(ROOT, 'skills', 'scene-direct', 'SKILL.md'), 'utf8');
+    for (const k of ['storyboard.mjs', '--compare', '--quality final']) expect(md).toContain(k);
+    const mods = readFileSync(join(ROOT, 'skills', 'scene-modules', 'SKILL.md'), 'utf8');
+    for (const t of ['warehouse', 'truck', 'forklift', 'pallet', 'container', 'road', 'lot', 'tree', 'pin', 'building']) expect(mods).toContain(t);
   });
 });
