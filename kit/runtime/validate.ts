@@ -1,5 +1,6 @@
 import { EASES } from './easing';
-import { ANIMS, CAMERA_MOVES, ELEMENT_ROLES, SKY_PRESETS, STYLE_NAMES, TRACK_PATHS, type TrackPath } from './types';
+import { BUILTIN_TEXTURES } from '../textures/names';
+import { ALL_ROLES, ANIMS, CAMERA_MOVES, ELEMENT_ROLES, SKY_PRESETS, STYLE_NAMES, TRACK_PATHS, type TrackPath } from './types';
 
 export interface Issue {
   path: string;
@@ -31,7 +32,9 @@ function knownKeys(err: Err, o: Obj, base: string, allowed: readonly string[]) {
 }
 
 const KEYS = {
-  root: ['meta', 'style', 'environment', 'elements', 'shots', 'custom'],
+  root: ['meta', 'style', 'environment', 'elements', 'shots', 'custom', 'look', 'customTextures'],
+  look: ['surfaces', 'strength'],
+  surface: ['texture', 'tile', 'strength', 'flow'],
   meta: ['width', 'height', 'fps', 'duration', 'seed', 'projection'],
   environment: ['sky', 'terrain', 'trees', 'water', 'ground'],
   ground: ['size'],
@@ -248,7 +251,37 @@ function validateShots(shots: unknown, duration: number, err: Err) {
   }
 }
 
-export function validateScene(input: unknown, types: Map<string, TypeInfo>): Issue[] {
+function validateLook(look: unknown, textures: readonly string[], err: Err) {
+  if (look === undefined) return;
+  if (!isObj(look)) return err('look', '객체여야 함');
+  knownKeys(err, look, 'look', KEYS.look);
+  numIn(err, look, 'look', 'strength', 0, 1);
+  if (look.surfaces === undefined) return;
+  if (!isObj(look.surfaces)) return err('look.surfaces', '역할 → 텍스처 이름 객체여야 함');
+  const names = `'none', ${list(textures)}`;
+  for (const [role, ref] of Object.entries(look.surfaces)) {
+    const p = `look.surfaces.${role}`;
+    if (!(ALL_ROLES as readonly string[]).includes(role)) {
+      err(p, `'${role}'은 알 수 없는 역할. 가능: ${list(ALL_ROLES)}`);
+      continue;
+    }
+    if (typeof ref === 'string') {
+      if (ref !== 'none' && !textures.includes(ref)) err(p, `'${ref}'은 알 수 없는 텍스처. 가능: ${names}`);
+      continue;
+    }
+    if (!isObj(ref)) {
+      err(p, `텍스처 이름 문자열 또는 { texture, tile?, strength?, flow? } 객체여야 함. 이름: ${names}`);
+      continue;
+    }
+    knownKeys(err, ref, p, KEYS.surface);
+    if (typeof ref.texture !== 'string' || !textures.includes(ref.texture)) err(`${p}.texture`, `텍스처 이름이 필요함. 가능: ${list(textures)}`);
+    if (ref.tile !== undefined && (!isNum(ref.tile) || ref.tile <= 0)) err(`${p}.tile`, '0보다 큰 숫자(m)여야 함');
+    numIn(err, ref, p, 'strength', 0, 1);
+    if (ref.flow !== undefined && !(Array.isArray(ref.flow) && ref.flow.length === 2 && ref.flow.every(isNum))) err(`${p}.flow`, '[x, z] 숫자 2개(m/s)여야 함');
+  }
+}
+
+export function validateScene(input: unknown, types: Map<string, TypeInfo>, textures: readonly string[] = BUILTIN_TEXTURES): Issue[] {
   const issues: Issue[] = [];
   const err: Err = (path, message) => {
     issues.push({ path, message });
@@ -275,6 +308,7 @@ export function validateScene(input: unknown, types: Map<string, TypeInfo>): Iss
   }
   oneOf(err, 'style', input.style, STYLE_NAMES);
   validateEnvironment(input.environment, err);
+  validateLook(input.look, textures, err);
   validateElements(input.elements, types, duration, err);
   validateShots(input.shots, duration, err);
   if (input.custom !== undefined && !Array.isArray(input.custom)) err('custom', '배열이어야 함');

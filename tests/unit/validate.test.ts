@@ -150,3 +150,17 @@ describe('v0.2 검증', () => {
     expect(p).toEqual(expect.arrayContaining(['meta.projection', 'shots[0].camera.size', 'shots[1].camera.points', 'shots[1].camera.target']));
   });
 });
+
+describe('v0.4 look 검증', () => {
+  it('look.surfaces 역할·텍스처 이름·세기·형식 (Review Focus 3)', () => {
+    const bad = { ...good(), look: { surfaces: { lava: 'grass-brush', ground: 'nope', roof: { texture: 'paper', tile: 0, strength: 3, flow: [1] }, rock: 5 }, strength: 2, gloss: 1 } };
+    const p = paths(bad);
+    expect(p).toEqual(expect.arrayContaining(['look.surfaces.lava', 'look.surfaces.ground', 'look.surfaces.roof.tile', 'look.surfaces.roof.strength', 'look.surfaces.roof.flow', 'look.surfaces.rock', 'look.strength', 'look.gloss']));
+    const msg = validateScene(bad, types).find((i) => i.path === 'look.surfaces.ground')!.message;
+    expect(msg).toMatch(/grass-brush/);
+  });
+  it('정상 look', () => {
+    expect(paths({ ...good(), look: { surfaces: { ground: 'grass-brush', roof: 'none', water: { texture: 'water-ripple', flow: [0, 0.2] } }, strength: 0.4 } })).toEqual([]);
+  });
+});
+

@@ -9,7 +9,9 @@ import { getStyle } from '../styles';
 import { cameraPose, DEFAULT_FOV } from './camera';
 import { followState } from './motion';
 import { elementRegistry } from './registry';
-import { rngFor } from './rng';
+import { deriveSeed, rngFor } from './rng';
+import { applySurface, resolveSurfaces } from './surface';
+import { textureRegistry, type TextureProvider } from '../textures';
 import { createLights, type Look } from './style';
 import { elementState, findShot, sampleTrack } from './timeline';
 import type { ElementDef, ElementHandle, ElementType, KitContext, Quality, SceneDef, TrackKey, TrackPath, Vec3 } from './types';
@@ -112,7 +114,14 @@ function computeFocus(items: Item[]): { center: Vec3; radius: number } {
   return { center, radius: Math.min(140, Math.max(20, radius + 2)) };
 }
 
-export function buildWorld(def: SceneDef, opts: { quality: Quality; aspect: number }): { world: World | null; issues: Issue[] } {
+export interface WorldOptions {
+  quality: Quality;
+  aspect: number;
+  /** 표면 질감·배경을 그리는 provider (브라우저 = p5). 없으면 질감 없이 렌더 */
+  textures?: TextureProvider;
+}
+
+export function buildWorld(def: SceneDef, opts: WorldOptions): { world: World | null; issues: Issue[] } {
   const disposables: Array<{ dispose(): void }> = [];
   const disposeAll = () => {
     for (const d of disposables) d.dispose();
@@ -199,7 +208,30 @@ export function buildWorld(def: SceneDef, opts: { quality: Quality; aspect: numb
   }
 
   const focus = computeFocus(items);
+  // 표면 질감: provider가 있을 때만 (메시 이름 = role 규약, buildByRole·리본)
+  const surfaceTime = { value: 0 };
+  if (opts.textures) {
+    let defs;
+    try {
+      defs = textureRegistry(def.customTextures ?? []);
+    } catch (e) {
+      disposeAll();
+      return { world: null, issues: [{ path: 'customTextures', message: (e as Error).message }] };
+    }
+    const surfaces = resolveSurfaces(style, def.look, defs);
+    if (surfaces.size) {
+      scene.traverse((o) => {
+        const mesh = o as THREE.Mesh;
+        if (!mesh.isMesh || Array.isArray(mesh.material)) return;
+        const s = surfaces.get(mesh.name as never);
+        if (!s) return;
+        const tex = opts.textures!.surface(defs.get(s.texture)!, deriveSeed(def.meta.seed, `tex:${s.texture}`));
+        applySurface(mesh.material, tex, s, surfaceTime);
+      });
+    }
+  }
   const setTime = (t: number) => {
+    surfaceTime.value = t;
     const { shot, u } = findShot(def.shots, t);
     const pose = cameraPose(shot.camera, u);
     camera.position.set(...pose.position);

@@ -57,6 +57,18 @@ const ROUGH: Partial<Record<Role, number>> = { dark: 0.4, trim: 0.5, water: 0.25
 export const pastel: Style = {
   name: 'pastel',
   look: LOOK,
+  surfaces: {
+    ground: 'grass-brush',
+    rock: 'rock-grain',
+    roof: 'roof-tiles',
+    roofAlt: 'roof-tiles',
+    road: 'soil-pebbles',
+    water: { texture: 'water-ripple', flow: [0, 0.25] },
+    wood: 'wood-grain',
+    body: 'paper',
+    bodyLight: 'paper',
+  },
+  surfaceStrength: 0.35,
   palette: PALETTE,
   fogDensity: 0.0008,
   labelFont: FONT_STACK,

@@ -132,7 +132,13 @@ export function boot(def: SceneDef): void {
     } catch (e) {
       return { ok: false, errors: [{ path: 'custom', message: (e as Error).message }] };
     }
-    const errors = validateScene(def, types);
+    let textureNames: string[];
+    try {
+      textureNames = [...textureRegistry(def?.customTextures ?? []).keys()];
+    } catch (e) {
+      return { ok: false, errors: [{ path: 'customTextures', message: (e as Error).message }] };
+    }
+    const errors = validateScene(def, types, textureNames);
     if (errors.length) return { ok: false, errors };
     await document.fonts.load('700 64px "Malgun Gothic"').catch(() => undefined);
     await document.fonts.ready;
@@ -140,7 +146,7 @@ export function boot(def: SceneDef): void {
     const k = quality === 'final' ? 1 : 0.5;
     const w = Math.round((meta.width * k) / 2) * 2;
     const h = Math.round((meta.height * k) / 2) * 2;
-    const built = buildWorld(def, { quality, aspect: meta.width / meta.height });
+    const built = buildWorld(def, { quality, aspect: meta.width / meta.height, textures: provider });
     if (!built.world) return { ok: false, errors: built.issues };
     const world = built.world;
     try {
