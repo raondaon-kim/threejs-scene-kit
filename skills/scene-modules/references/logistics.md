@@ -10,8 +10,8 @@ clay 스타일에서 movie2풍 클레이 룩. 다른 스타일에서도 동작�
 | docks | 4 | 앞면(+Z) 도크 수. 도크 x 위치 = −0.36w + i·0.72w/(docks−1) (중심 대칭, 1개면 0) |
 | skylights | 3 | 지붕 채광창 수 |
 | ribs | true | 벽 세로 패널 리브 |
-도크 앞에 트럭을 대려면 트럭 `at = [도크x, 0, depth/2 + length/2 − 0.3]`.
-예: width 30, docks 4 → 도크 x = −10.8, −3.6, 3.6, 10.8. depth 16, 트럭 길이 9 → z = 12.2.
+도크 앞에 트럭을 대려면 트럭 `at = [도크x, 0, depth/2 + length/2 + 0.7]` (뒷면이 노란 범퍼 바로 앞).
+예: width 30, docks 4 → 도크 x = −10.8, −3.6, 3.6, 10.8. depth 16, 트럭 길이 9 → z = 13.2.
 
 ## truck — 트럭 (animatable: travel)
 | param | 기본 | 설명 |
@@ -77,8 +77,8 @@ clay 스타일에서 movie2풍 클레이 룩. 다른 스타일에서도 동작�
 
 ```ts
 { id: 'wh', type: 'warehouse', at: [0, 0, 0], params: { width: 30, depth: 16, docks: 4 } },
-{ id: 'truck-in', type: 'truck', at: [3.6, 0, 12.2], rotation: [0, 180, 0],
-  follow: { path: [[3.6, 26], [3.6, 12.2]], t0: 5, t1: 9 } },
+{ id: 'truck-in', type: 'truck', at: [3.6, 0, 13.2], rotation: [0, 180, 0],
+  follow: { path: [[3.6, 26], [3.6, 13.2]], t0: 5, t1: 9 } },
 { id: 'fork', type: 'forklift', params: { load: true },
   follow: { path: [[-14, 22], [-10, 20], [-7.6, 16.6]], t0: 6, t1: 10.6 },
   tracks: { 'param.lift': [[10.6, 0], [12.2, 0.75]] } },
