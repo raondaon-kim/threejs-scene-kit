@@ -83,3 +83,46 @@ describe('buildWorld', () => {
     expect(issues[0].message).toMatch(/star/);
   });
 });
+
+describe('v0.2 world', () => {
+  const v2 = (): SceneDef => ({
+    meta: { width: 1920, height: 1080, fps: 30, duration: 10, seed: 2, projection: 'ortho' },
+    style: 'clay',
+    environment: { ground: { size: 200 } },
+    elements: [
+      { id: 'mover', type: 'arrow', at: [0, 1, 0], params: { to: [0, 2, 0] }, follow: { path: [[0, 0], [20, 0]], t0: 0, t1: 10, ease: 'linear' } },
+    ],
+    shots: [{ id: 'a', start: 0, end: 10, camera: { move: 'static', pos: [30, 30, 30], target: [0, 0, 0], size: 40, sizeTo: 20 } }],
+  });
+  it('ortho 카메라 프로젝션이 size와 aspect를 따름 (Review Focus 2)', () => {
+    const { world } = buildWorld(v2(), { quality: 'preview', aspect: 16 / 9 });
+    const cam = world!.camera as THREE.OrthographicCamera;
+    expect(cam.isOrthographicCamera).toBe(true);
+    world!.setTime(0);
+    expect(cam.top - cam.bottom).toBeCloseTo(40);
+    expect((cam.right - cam.left) / (cam.top - cam.bottom)).toBeCloseTo(16 / 9);
+    world!.setTime(10);
+    expect(cam.top - cam.bottom).toBeCloseTo(20);
+    world!.dispose();
+  });
+  it('follow: 위치·방향, at.y 유지', () => {
+    const { world } = buildWorld(v2(), { quality: 'preview', aspect: 1 });
+    world!.setTime(5);
+    const h = world!.scene.getObjectByName('mover')!;
+    expect(h.position.x).toBeCloseTo(10);
+    expect(h.position.y).toBeCloseTo(1);
+    expect(h.rotation.y).toBeCloseTo(Math.PI / 2);
+    world!.dispose();
+  });
+  it('그림자 플래그, ground, focus, sun', () => {
+    const { world } = buildWorld(v2(), { quality: 'preview', aspect: 1 });
+    let casters = 0;
+    world!.scene.getObjectByName('mover')!.traverse((o) => { if ((o as THREE.Mesh).isMesh && o.castShadow) casters++; });
+    expect(casters).toBeGreaterThan(0);
+    expect(world!.scene.getObjectByName('ground')!.receiveShadow).toBe(true);
+    expect(world!.focus.radius).toBeGreaterThanOrEqual(20);
+    expect(world!.sun.isDirectionalLight).toBe(true);
+    expect(world!.look.toneMapping).toBe('neutral');
+    world!.dispose();
+  });
+});
