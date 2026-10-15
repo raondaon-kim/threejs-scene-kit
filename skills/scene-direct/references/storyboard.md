@@ -35,6 +35,7 @@ Codex CLI(`codex exec`)의 이미지 생성으로 샷별 콘셉트 이미지를 
 
 - 물류·도시 장면: `"kit": "logistics"` (기본)
 - 개념·강의 장면(도형·라벨·화살표·그래프): `"kit": "concept"` (라벨 글자 허용) + perspective면 `"camera": "free"`
+  - concept이면 style 문장에서 `no text`를 뺀다 (예제 style의 "no text"가 남으면 라벨 없는 스토리보드가 나온다)
 - 여러 개 `["logistics", "concept"]`: 물체는 합치고, 금지 목록은 **교집합**(모든 키트가 금지하는 것만)
 
 끄기 (전역 또는 샷 단위, 샷 값 우선):

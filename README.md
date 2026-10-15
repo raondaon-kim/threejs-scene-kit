@@ -4,7 +4,7 @@
 교육 강의·유튜브 쇼츠용 3D 장면을 **장면 데이터(`scene.ts`)만 고쳐서** 만들고, 결정적인 무음 MP4로 렌더한다.
 v0.2: movie2풍 클레이 아이소메트릭 룩(그림자·AO·IBL·SSAA), 절차적 물류·도시 키트 10종, 경로 이동·파라미터 애니메이션, ortho·path 카메라, Codex 스토리보드 → 비교 시트 → preview/final 렌더.
 v0.2.1: 앵커 헬퍼(`kit/anchors`: 도크·트럭 정차·후진 경로·차선)로 좌표 손계산 제거, 스토리보드에 키트 목록·고정 아이소 카메라 자동 주입(물류 장면용, `free`로 끄기).
-v0.2.2: 스토리보드 키트 목록을 키트별 vocab.json에서 조립("kit": "logistics" | "concept" | 배열). 새 키트 = kit/modules/<키트>/index.ts(*_ELEMENTS) + vocab.json.
+v0.2.2: 스토리보드 키트 목록을 키트별 vocab.json에서 조립("kit": "logistics" | "concept" | 배열). 새 키트 = kit/modules/<키트>/index.ts(*_ELEMENTS) + vocab.json + kit/runtime/registry.ts의 BUILTIN_ELEMENTS에 추가 (테스트가 셋의 일치를 검사).
 자막·나레이션·음악은 결과 영상을 Remotion 등에서 합치는 것을 전제로 한다.
 
 ## 구성

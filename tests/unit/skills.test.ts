@@ -65,6 +65,11 @@ describe('skills', () => {
     expect(sb).toMatch(/물류.*장면 전용|개념.*free/);
     expect(JSON.parse(readFileSync(join(ROOT, '.claude-plugin', 'plugin.json'), 'utf8')).version).toBe('0.2.2');
   });
+  it('최종 리뷰: 키트 추가 안내에 registry 연결, concept는 style의 no text 제거 안내', () => {
+    expect(readFileSync(join(ROOT, 'README.md'), 'utf8')).toMatch(/vocab\.json.*registry\.ts.*BUILTIN_ELEMENTS/);
+    const sb = readFileSync(join(ROOT, 'skills', 'scene-direct', 'references', 'storyboard.md'), 'utf8');
+    expect(sb).toMatch(/concept.*style.*no text/);
+  });
   it('kit 선택 문서·예제', () => {
     const sb = readFileSync(join(ROOT, 'skills', 'scene-direct', 'references', 'storyboard.md'), 'utf8');
     for (const k of ['"kit"', '"concept"', '교집합', 'vocab.json']) expect(sb).toContain(k);

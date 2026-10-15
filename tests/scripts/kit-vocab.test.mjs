@@ -3,6 +3,7 @@ import { mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { CAMERA_ISO, kitTypes, loadKits, vocabSentence } from '../../scripts/lib/kit-vocab.mjs';
+import { BUILTIN_ELEMENTS } from '../../kit/runtime/registry.ts';
 
 const KIT_INDEXES = import.meta.glob('../../kit/modules/*/index.ts', { eager: true });
 const fakeRoot = (kits) => {
@@ -26,8 +27,15 @@ describe('kit-vocab', () => {
       expect(kits.has(name), `${name}/vocab.json`).toBe(true);
       expect(Object.keys(kits.get(name).objects).sort()).toEqual(arr.map((e) => e.type).sort());
     }
-    expect(seen.sort()).toEqual(['concept', 'logistics']);
-    expect([...kits.keys()].sort()).toEqual(['concept', 'logistics']);
+    expect(seen.sort()).toEqual([...kits.keys()].sort());
+    expect(seen.length).toBeGreaterThanOrEqual(2);
+  });
+  it('*_ELEMENTS의 모든 type이 registry BUILTIN_ELEMENTS에 연결됨 (최종 리뷰: 키트 추가 시 registry 누락 방지)', () => {
+    const builtin = new Set(BUILTIN_ELEMENTS.map((e) => e.type));
+    for (const [path, mod] of Object.entries(KIT_INDEXES)) {
+      const arr = Object.entries(mod).find(([k]) => k.endsWith('_ELEMENTS'))?.[1] ?? [];
+      for (const e of arr) expect(builtin.has(e.type), `${path}: ${e.type}`).toBe(true);
+    }
   });
   it("vocabSentence(['logistics'])는 이전 문장과 완전히 같음 (기본값도)", () => {
     const s = 'Only depict objects from this list: a warehouse with loading docks, box trucks and vans, yellow forklifts, pallets with cardboard boxes or blue crates, shipping containers, roads with a dashed center line, paved lots, round lollipop trees and cone trees, blue map pins, simple office buildings. Do not include: cars, people, text, logos, distant towns, water, bridges.';
