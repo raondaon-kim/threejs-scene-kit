@@ -1,0 +1,7 @@
+{
+  "name": "threejs-scene-kit",
+  "version": "0.1.0",
+  "description": "대화로 연출하는 절차적 Three.js 짧은 영상(쇼츠·강의) 제작 키트: 장면 데이터 + 검증된 모듈 + 타임라인 미리보기 + 결정적 MP4 렌더",
+  "author": { "name": "김용현" },
+  "keywords": ["threejs", "procedural", "video", "shorts", "education", "remotion"]
+}
