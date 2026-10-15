@@ -4,7 +4,7 @@
  */
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
-import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+import { mergeGeometries, mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
 import type { Style } from '../runtime/style';
 import type { Role } from '../runtime/types';
 
@@ -39,6 +39,93 @@ export function sphere(r: number): THREE.BufferGeometry {
 export function cone(r: number, h: number): THREE.BufferGeometry {
   const g = new THREE.ConeGeometry(r, h, 28);
   g.translate(0, h / 2, 0);
+  return g;
+}
+
+/** 곡선 위의 평평한 리본(법선 +Y). offset 범위 [a, b]는 중심선 기준 좌우 거리. */
+export function ribbon(curve: THREE.Curve<THREE.Vector3>, u0: number, u1: number, steps: number, a: number, b: number, y: number): THREE.BufferGeometry {
+  const pos: number[] = [];
+  const nor: number[] = [];
+  const idx: number[] = [];
+  for (let i = 0; i <= steps; i++) {
+    const u = u0 + ((u1 - u0) * i) / steps;
+    const p = curve.getPointAt(u);
+    const t = curve.getTangentAt(u);
+    let nx = -t.z;
+    let nz = t.x;
+    const l = Math.hypot(nx, nz);
+    if (l < 1e-8 || !Number.isFinite(l)) {
+      nx = 1;
+      nz = 0;
+    } else {
+      nx /= l;
+      nz /= l;
+    }
+    pos.push(p.x + nx * a, y, p.z + nz * a, p.x + nx * b, y, p.z + nz * b);
+    nor.push(0, 1, 0, 0, 1, 0);
+    if (i > 0) {
+      const k = i * 2;
+      idx.push(k - 2, k, k - 1, k - 1, k, k + 1);
+    }
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3));
+  g.setIndex(idx);
+  // 리본의 감김 방향과 관계없이 위에서 보이도록 양면 재질을 쓴다.
+  return g;
+}
+
+/**
+ * 시드로 표면을 살짝 울퉁불퉁하게 만든 구 덩어리(바위·구름·나무 덩어리). 바닥 원점, 결정적.
+ * amp: 반지름 변형 비율, detail: 아이코스피어 세분 단계.
+ */
+export function blob(r: number, rng: () => number, amp = 0.18, detail = 2): THREE.BufferGeometry {
+  const ico = new THREE.IcosahedronGeometry(r, detail);
+  ico.deleteAttribute('normal');
+  ico.deleteAttribute('uv');
+  const g = mergeVertices(ico);
+  ico.dispose();
+  const pos = g.attributes.position;
+  const v = new THREE.Vector3();
+  for (let i = 0; i < pos.count; i++) {
+    v.fromBufferAttribute(pos, i);
+    v.multiplyScalar(1 + amp * (rng() * 2 - 1));
+    pos.setXYZ(i, v.x, v.y, v.z);
+  }
+  g.computeVertexNormals();
+  g.computeBoundingBox();
+  g.translate(0, -g.boundingBox!.min.y, 0);
+  return g;
+}
+
+/** 박공지붕용 삼각 기둥: 바닥 폭 w, 높이 h, 용마루는 Z축 방향(길이 d). 바닥 원점 */
+export function prism(w: number, h: number, d: number): THREE.BufferGeometry {
+  const s = new THREE.Shape();
+  s.moveTo(-w / 2, 0);
+  s.lineTo(w / 2, 0);
+  s.lineTo(0, h);
+  s.closePath();
+  const g = new THREE.ExtrudeGeometry(s, { depth: d, bevelEnabled: false });
+  g.translate(0, 0, -d / 2);
+  return g;
+}
+
+/** 아치: 폭 span·높이 rise의 반타원 구멍을 낸 벽(두께 thick)을 Z로 depth만큼 압출. 바닥 원점, X 방향으로 걸침 */
+export function arch(span: number, rise: number, thick: number, depth: number, seg = 24): THREE.BufferGeometry {
+  const W = span / 2 + thick;
+  const s = new THREE.Shape();
+  s.moveTo(-W, 0);
+  s.lineTo(-W, rise + thick);
+  s.lineTo(W, rise + thick);
+  s.lineTo(W, 0);
+  for (let i = 0; i <= seg; i++) {
+    const a = (Math.PI * i) / seg;
+    s.lineTo((Math.cos(a) * span) / 2, Math.sin(a) * rise);
+  }
+  s.closePath();
+  const g = new THREE.ExtrudeGeometry(s, { depth, bevelEnabled: false, curveSegments: seg });
+  g.translate(0, 0, -depth / 2);
   return g;
 }
 

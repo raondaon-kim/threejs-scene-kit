@@ -22,7 +22,7 @@ export default defineScene({ meta, style, environment?, elements?, shots, custom
 
 ## style (필수)
 
-`'stylized'`(툰 셰이딩, 따뜻한 색), `'minimal'`(중립색, 부드러운 조명), `'clay'`(movie2풍 파랑·흰색 클레이, 부드러운 그림자·AO·IBL). 같은 장면을 스타일만 바꿔 렌더할 수 있다.
+`'stylized'`(툰 셰이딩, 따뜻한 색), `'minimal'`(중립색, 부드러운 조명), `'clay'`(movie2풍 파랑·흰색 클레이, 부드러운 그림자·AO·IBL), `'pastel'`(동화 디오라마 파스텔 클레이, 동화 키트용). 같은 장면을 스타일만 바꿔 렌더할 수 있다.
 
 ## environment (선택)
 

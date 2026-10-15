@@ -20,6 +20,9 @@ const PALETTE: Record<Role, string> = {
   water: '#9db8f5',
   neutral: '#eef0fc',
   label: '#1d2550',
+  rock: '#b9c0e0',
+  roof: '#5f86f2',
+  roofAlt: '#94adf7',
 };
 
 const BASE: SkyColors = {

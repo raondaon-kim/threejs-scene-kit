@@ -19,6 +19,9 @@ const PALETTE: Record<Role, string> = {
   cargo: '#d7a86e',
   wood: '#9c6b43',
   label: '#2b2d42',
+  rock: '#9a958c',
+  roof: '#c8553d',
+  roofAlt: '#7d5ba6',
 };
 
 const SKIES: Record<SkyPreset, SkyColors> = {

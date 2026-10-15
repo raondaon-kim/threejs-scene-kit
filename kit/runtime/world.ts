@@ -183,7 +183,7 @@ export function buildWorld(def: SceneDef, opts: { quality: Quality; aspect: numb
       holder.name = el.id;
       holder.add(h.object3d);
       scene.add(holder);
-      setShadows(h.object3d, true, true);
+      setShadows(h.object3d, !h.object3d.userData.noShadow, true);
       const mats = collectMaterials(h.object3d).map((m) => {
         m.transparent = true;
         return { m, base: m.opacity };

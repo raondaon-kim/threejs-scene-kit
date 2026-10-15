@@ -1,6 +1,9 @@
 import * as THREE from 'three';
 import { describe, it, expect } from 'vitest';
-import { lane, warehouseAnchors, type XZ } from '../../kit/anchors';
+import { bridgeOn, islandEdge, lane, warehouseAnchors, type XZ } from '../../kit/anchors';
+import { island } from '../../kit/modules/fairytale/island';
+import { getStyle } from '../../kit/styles';
+import { rngFor } from '../../kit/runtime/rng';
 import { dockPositions } from '../../kit/modules/logistics/warehouse';
 
 type V3 = [number, number, number];
@@ -100,5 +103,48 @@ describe('lane', () => {
     expect(() => lane([[1, 1], [1, 1]], 1)).toThrow(/2개/);
     expect(() => lane([[0, 0], [NaN, 1]], 1)).toThrow(/숫자/);
     expect(() => lane([[0, 0], [1, 0]], NaN)).toThrow(/offset/);
+  });
+});
+
+describe('bridgeOn', () => {
+  const R: XZ[] = [[0, -10], [0, 0], [10, 10], [20, 10]];
+  it('로컬 X가 강 법선과 평행 (Review Focus 4)', () => {
+    const p = bridgeOn(R, 1);
+    close(p.at, [0, 0, 0]);
+    const yaw = (p.rotation[1] * Math.PI) / 180;
+    const localX = [Math.cos(yaw), -Math.sin(yaw)];
+    const t = [10 - 0, 10 - -10];
+    const l = Math.hypot(t[0], t[1]);
+    const n = [-t[1] / l, t[0] / l];
+    expect(Math.abs(localX[0] * n[0] + localX[1] * n[1])).toBeCloseTo(1, 6);
+  });
+  it('끝점·정수 아님·범위 밖 → 오류', () => {
+    for (const i of [0, 3, 1.5, -1, 9]) expect(() => bridgeOn(R, i)).toThrow(/1\.\.2/);
+  });
+});
+
+describe('islandEdge (최종 리뷰 I1: 폭포가 절벽 바위에 묻힘)', () => {
+  it.each([16, 30, 50])('R%s: 모든 각도에서 절벽 바위보다 바깥, 바깥을 향함', (R) => {
+    const ctx = { style: getStyle('pastel'), rng: (s: string) => rngFor(3, s), heightAt: () => 0, quality: 'preview' as const, camera: new THREE.PerspectiveCamera() };
+    const o = island.create(ctx, { radius: R }).object3d;
+    o.getObjectByName('floaters')!.removeFromParent();
+    let maxR = 0;
+    o.traverse((m) => {
+      const mesh = m as THREE.Mesh;
+      if (!mesh.isMesh) return;
+      const p = mesh.geometry.attributes.position;
+      for (let i = 0; i < p.count; i++) if (p.getY(i) > -3) maxR = Math.max(maxR, Math.hypot(p.getX(i), p.getZ(i)));
+    });
+    for (const deg of [0, 90, 200]) {
+      const e = islandEdge(R, deg);
+      expect(Math.hypot(e.at[0], e.at[2])).toBeGreaterThan(maxR);
+      const yaw = (e.rotation[1] * Math.PI) / 180;
+      const localZ = [Math.sin(yaw), Math.cos(yaw)];
+      const out = [e.at[0], e.at[2]].map((v) => v / Math.hypot(e.at[0], e.at[2]));
+      expect(localZ[0] * out[0] + localZ[1] * out[1]).toBeCloseTo(1, 6);
+    }
+  });
+  it('잘못된 반지름 오류', () => {
+    expect(() => islandEdge(NaN, 0)).toThrow(/radius/);
   });
 });

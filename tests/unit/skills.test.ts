@@ -63,7 +63,7 @@ describe('skills', () => {
     expect(lg).toContain('width: WH.width, depth: WH.depth, docks: WH.docks');
     const sb = readFileSync(join(ROOT, 'skills', 'scene-direct', 'references', 'storyboard.md'), 'utf8');
     expect(sb).toMatch(/물류.*장면 전용|개념.*free/);
-    expect(JSON.parse(readFileSync(join(ROOT, '.claude-plugin', 'plugin.json'), 'utf8')).version).toBe('0.2.2');
+    expect(JSON.parse(readFileSync(join(ROOT, '.claude-plugin', 'plugin.json'), 'utf8')).version).toBe('0.3.0');
   });
   it('최종 리뷰: 키트 추가 안내에 registry 연결, concept는 style의 no text 제거 안내', () => {
     expect(readFileSync(join(ROOT, 'README.md'), 'utf8')).toMatch(/vocab\.json.*registry\.ts.*BUILTIN_ELEMENTS/);
@@ -75,5 +75,26 @@ describe('skills', () => {
     for (const k of ['"kit"', '"concept"', '교집합', 'vocab.json']) expect(sb).toContain(k);
     expect(readFileSync(join(ROOT, 'README.md'), 'utf8')).toContain('vocab.json');
     expect(JSON.parse(readFileSync(join(ROOT, 'template', 'storyboard.example.json'), 'utf8')).kit).toBe('logistics');
+  });
+  it('v0.3: 동화 키트 문서', () => {
+    const mods = readFileSync(join(ROOT, 'skills', 'scene-modules', 'SKILL.md'), 'utf8');
+    for (const t of ['island', 'plateau', 'rock', 'river', 'waterfall', 'path', 'bridge', 'castle', 'cottage', 'mushroom', 'windmill', 'fairytree', 'flowers', 'field', 'fence', 'cloud', 'pastel']) expect(mods, t).toContain(t);
+    const ft = readFileSync(join(ROOT, 'skills', 'scene-modules', 'references', 'fairytale.md'), 'utf8');
+    for (const k of ['bridgeOn', 'waterfall', 'plateau', 'height']) expect(ft).toContain(k);
+    const sb = readFileSync(join(ROOT, 'skills', 'scene-direct', 'references', 'storyboard.md'), 'utf8');
+    expect(sb).toContain('"diorama"');
+    expect(sb).toContain('"fairytale"');
+  });
+  it('최종 리뷰: 동화 키트 문서 — variant 안내, diorama·fairytale·pastel 안내, islandEdge', () => {
+    const mods = readFileSync(join(ROOT, 'skills', 'scene-modules', 'SKILL.md'), 'utf8');
+    expect(mods).toMatch(/variant: i/);
+    const ft = readFileSync(join(ROOT, 'skills', 'scene-modules', 'references', 'fairytale.md'), 'utf8');
+    expect(ft).toContain('islandEdge');
+    const sb = readFileSync(join(ROOT, 'skills', 'scene-direct', 'references', 'storyboard.md'), 'utf8');
+    expect(sb).not.toMatch(/perspective 장면은 `"camera": "free"`/);
+    expect(sb).toMatch(/"kit".*"fairytale"/);
+    const schema = readFileSync(join(ROOT, 'skills', 'scene-direct', 'references', 'scene-schema.md'), 'utf8');
+    expect(schema).toContain('pastel');
+    expect(readFileSync(join(ROOT, 'scripts', 'init.mjs'), 'utf8')).toMatch(/stylized\|minimal\|clay\|pastel/);
   });
 });

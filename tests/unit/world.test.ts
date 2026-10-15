@@ -162,3 +162,21 @@ describe('v0.2 리뷰 수정', () => {
     world!.dispose();
   });
 });
+
+describe('v0.3', () => {
+  it('userData.noShadow 요소는 그림자를 드리우지 않음 (Review Focus 5)', () => {
+    const def: SceneDef = { meta: { width: 640, height: 360, fps: 30, duration: 2, seed: 1 }, style: 'pastel', elements: [{ id: 'c', type: 'cloud', at: [0, 10, 0] }], shots: [{ id: 'a', start: 0, end: 2, camera: { move: 'static', pos: [0, 10, 30], target: [0, 0, 0] } }] };
+    const { world, issues } = buildWorld(def, { quality: 'preview', aspect: 16 / 9 });
+    expect(issues).toEqual([]);
+    const holder = world!.scene.getObjectByName('c')!;
+    let meshes = 0;
+    holder.traverse((o) => {
+      if ((o as THREE.Mesh).isMesh) {
+        meshes++;
+        expect(o.castShadow).toBe(false);
+      }
+    });
+    expect(meshes).toBeGreaterThan(0);
+    world!.dispose();
+  });
+});

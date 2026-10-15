@@ -207,5 +207,51 @@ step('clay: render final 0.5초 = 1920×1080×15 (Review Focus 5)', () => {
   return `${out.perFrameMs}ms/frame`;
 });
 
+// ── v0.3: 동화 디오라마 미니 장면 (pastel, 원근, 섬·폭포·성·다리·구름) ──
+const FT = join(ROOT, 'tests', '.e2e', 'fairytale');
+const FT_GOLDEN = join(ROOT, 'tests', 'golden', 'fairytale_preview.png');
+const FT_SCENE = `import { defineScene } from './kit/runtime/scene';
+import { bridgeOn, islandEdge, type XZ } from './kit/anchors';
+const FALL = islandEdge(16, 90);
+const RIVER: XZ[] = [[0, -8], [-1, 0], [1, 8], [FALL.at[0], FALL.at[2]]];
+export default defineScene({
+  meta: { width: 1920, height: 1080, fps: 30, duration: 4, seed: 4 },
+  style: 'pastel',
+  environment: { sky: { preset: 'day' } },
+  elements: [
+    { id: 'island', type: 'island', params: { radius: 16, depth: 12, floaters: 4 } },
+    { id: 'plateau', type: 'plateau', at: [0, 0, -10], params: { radius: 5, height: 4 } },
+    { id: 'castle', type: 'castle', at: [0, 4, -11], params: { size: 7 } },
+    { id: 'river', type: 'river', params: { points: RIVER, width: 2.4 } },
+    { id: 'fall', type: 'waterfall', ...FALL, params: { height: 10, width: 2.6 } },
+    { id: 'bridge', type: 'bridge', ...bridgeOn(RIVER, 1), params: { span: 4 } },
+    { id: 'cottage', type: 'cottage', at: [-8, 0, 2], rotation: [0, 20, 0] },
+    { id: 'mush', type: 'mushroom', at: [-6, 0, 8] },
+    { id: 'mill', type: 'windmill', at: [8, 0, -2] },
+    { id: 'tree', type: 'fairytree', at: [7, 0, 7], params: { height: 4 } },
+    { id: 'flowers', type: 'flowers', at: [-3, 0, 11] },
+    { id: 'cloud', type: 'cloud', at: [-24, 6, 0], params: { size: 7 } },
+  ],
+  shots: [{ id: 'a', start: 0, end: 4, camera: { move: 'path', fov: 36, points: [[-8, 22, 46], [8, 21, 46]], target: [0, -3, 0] } }],
+});
+`;
+step('fairytale: 프로젝트 준비 + check', () => {
+  rmSync(join(FT, 'scene.ts'), { force: true });
+  script('init.mjs', [FT, '--style', 'pastel', '--force']);
+  if (!existsSync(join(FT, 'node_modules'))) symlinkSync(join(PROJ, 'node_modules'), join(FT, 'node_modules'), 'junction');
+  writeFileSync(join(FT, 'scene.ts'), FT_SCENE);
+  return script('check.mjs', ['--project', FT]).gpu;
+});
+step('fairytale: still + golden', () => {
+  const cur = script('still.mjs', ['--project', FT, '--at', '2']).files[0];
+  if (!existsSync(FT_GOLDEN)) {
+    copyFileSync(cur, FT_GOLDEN);
+    return '기준 이미지 생성 (눈으로 검수 후 커밋)';
+  }
+  const d = meanDiff(FT_GOLDEN, cur);
+  if (d > 2) throw new Error(`fairytale 골든 대비 평균 차이 ${d.toFixed(3)} > 2`);
+  return `meanDiff=${d.toFixed(3)}`;
+});
+
 console.log(failed ? `\n${failed} FAILED` : '\nALL PASSED');
 process.exit(failed ? 1 : 0);

@@ -26,6 +26,30 @@ description: threejs-scene-kit 장면에 넣을 수 있는 요소와 환경의 �
 - 좌표 손계산 금지: 도크·트럭 정차·후진 경로·차선은 `import { warehouseAnchors, lane } from './kit/anchors'` (logistics.md 앵커 섹션).
 - 상세·배치 공식·예시: `references/logistics.md`
 
+## 동화 키트 (pastel 스타일 + 원근 디오라마)
+
+| type | 용도 | 주요 params | 움직임 |
+|---|---|---|---|
+| island | 떠 있는 섬(윗면 y=0) | radius, depth, floaters, variant | 떠 있는 바위 |
+| plateau | 높은 단(윗면 = height) | radius, height | – |
+| rock | 바위 | size, variant | – |
+| river | 강 (절대 좌표) | points, width | – |
+| waterfall | 폭포(원점 = 위 가장자리) | height, width | 물보라 |
+| path | 흙길 (절대 좌표) | points, width | – |
+| bridge | 돌 아치 다리(로컬 X) | span, width | – |
+| castle | 성 | size, towers | 깃발 |
+| cottage | 오두막 | width, depth, roof | – |
+| mushroom | 버섯집 | height | – |
+| windmill | 풍차 | height, speed | 날개 회전 |
+| fairytree | 동화 나무 | kind(puffy, conifer), height | – |
+| flowers | 꽃밭 | radius, count | – |
+| field | 밀밭 | width, depth, rows | – |
+| fence | 울타리 (절대 좌표) | points | – |
+| cloud | 구름(그림자 없음) | size | 위아래 |
+
+- 다리 배치는 `bridgeOn(RIVER, i)`, 폭포는 `islandEdge(radius, 각도)` (kit/anchors). 상세·구도: `references/fairytale.md`
+- 같은 type·같은 variant는 같은 모양. 나무·꽃·바위·버섯·구름·섬·높은 단을 여러 개 놓을 땐 `variant: i`로 다르게.
+
 ## 개념 요소
 
 | type | 용도 | 주요 params | grow |
@@ -53,7 +77,7 @@ description: threejs-scene-kit 장면에 넣을 수 있는 요소와 환경의 �
 
 ## role (색 역할)
 
-`body`, `bodyLight`, `trim`, `dark`, `road`, `cargo`, `wood`, `accent`, `accent2`, `accent3`, `neutral`, `label`, `ground`, `foliage`, `trunk`, `water`.
+`rock`, `roof`, `roofAlt`, `body`, `bodyLight`, `trim`, `dark`, `road`, `cargo`, `wood`, `accent`, `accent2`, `accent3`, `neutral`, `label`, `ground`, `foliage`, `trunk`, `water`.
 실제 색은 스타일이 정한다. clay: body 파랑 #3f6cf0, bodyLight #94adf7, trim 흰색, dark 남색 #27315c, accent 노랑 #ffb020, cargo 종이상자 #d2a679.
 
 없는 요소가 필요하면 scene-custom 스킬을 쓴다.
