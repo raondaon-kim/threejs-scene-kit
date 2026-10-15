@@ -94,7 +94,7 @@ describe('storyboard.mjs (가짜 codex)', () => {
     const { code, out } = run(['--project', dir]);
     expect(code).toBe(1);
     const e = out.errors.find((x) => x.path === 'storyboard.kit');
-    expect(e.message).toMatch(/concept, fairytale, logistics/);
+    expect(e.message).toMatch(/concept, detail, fairytale, logistics/);
   });
   it('camera diorama: 원근 디오라마 문장, ortho 장면이면 경고 (v0.3)', () => {
     sbWith({ kit: 'fairytale', camera: 'diorama' });
