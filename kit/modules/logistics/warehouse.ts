@@ -1,13 +1,9 @@
 import { buildByRole, cyl, place, roundedBox, type Part } from '../../parts';
 import { defineElement } from '../../runtime/element';
 import { num } from './common';
+import { dockPositions } from './layout';
 
-/** 도크 x 위치: 중심 대칭, 양 끝 ±0.36w */
-export function dockPositions(w: number, docks: number): number[] {
-  if (docks <= 0) return [];
-  if (docks === 1) return [0];
-  return Array.from({ length: docks }, (_, i) => -w * 0.36 + (i * w * 0.72) / (docks - 1));
-}
+export { dockPositions };
 
 /** 창고: 둥근 박스 몸체, 세로 패널 리브(ribs), 앞면(+Z) 도크, 지붕 스카이라이트·설비 */
 export const warehouse = defineElement({

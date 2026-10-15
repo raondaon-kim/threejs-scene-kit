@@ -3,6 +3,7 @@ import * as THREE from 'three';
 import { getStyle } from '../../kit/styles';
 import { LOGISTICS_ELEMENTS } from '../../kit/modules/logistics';
 import { dockPositions } from '../../kit/modules/logistics/warehouse';
+import { warehouseAnchors } from '../../kit/anchors';
 import { elementRegistry } from '../../kit/runtime/registry';
 import type { KitContext } from '../../kit/runtime/types';
 
@@ -79,6 +80,19 @@ describe('logistics kit', () => {
     for (let i = 0; i < pos.count; i++) if (pos.getZ(i) > 6.9) front.expandByPoint(new THREE.Vector3(pos.getX(i), pos.getY(i), pos.getZ(i)));
     expect(front.min.x).toBeCloseTo(-front.max.x, 1);
     void bb;
+    h.dispose();
+  });
+  it('앵커 dock x = 실제 메시의 범퍼 기둥 사이 중앙 (accent 기둥 x±1.9)', () => {
+    const h = byType.warehouse.create(ctx, { width: 30, depth: 16, docks: 3 });
+    const accent = h.object3d.getObjectByName('accent') as THREE.Mesh;
+    const pos = accent.geometry.attributes.position;
+    const xs: number[] = [];
+    for (let i = 0; i < pos.count; i++) xs.push(pos.getX(i));
+    const wh = warehouseAnchors({ width: 30, depth: 16, docks: 3 });
+    for (let i = 0; i < 3; i++) {
+      const x = wh.dock(i)[0];
+      for (const s of [-1, 1]) expect(xs.some((v) => Math.abs(v - (x + s * 1.9)) < 0.11)).toBe(true);
+    }
     h.dispose();
   });
   it('lot: role 지정', () => {
