@@ -167,3 +167,24 @@ describe('fairytale 자연', () => {
     expect(h.object3d.position.y).toBe(a);
   });
 });
+
+describe('fairytale 리본 면 방향 (벤치마크 1라운드: 강·길이 어둡게 렌더)', () => {
+  it.each(['river', 'path'])('%s: 리본 삼각형이 위(+Y)를 향함', (t) => {
+    const h = BY[t].create(ctx, { points: [[0, 0], [10, 0], [12, 10]] });
+    let checked = 0;
+    h.object3d.traverse((o) => {
+      const m = o as THREE.Mesh;
+      if (!m.isMesh || !['water', 'road'].includes(m.name)) return;
+      const g = m.geometry;
+      const idx = g.index!;
+      const p = g.attributes.position;
+      const a = new THREE.Vector3().fromBufferAttribute(p, idx.getX(0));
+      const b = new THREE.Vector3().fromBufferAttribute(p, idx.getX(1));
+      const c = new THREE.Vector3().fromBufferAttribute(p, idx.getX(2));
+      const n = new THREE.Vector3().subVectors(b, a).cross(new THREE.Vector3().subVectors(c, a));
+      expect(n.y, m.name).toBeGreaterThan(0);
+      checked++;
+    });
+    expect(checked).toBeGreaterThan(0);
+  });
+});

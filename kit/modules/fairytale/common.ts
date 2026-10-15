@@ -60,8 +60,30 @@ export function rockRing(parts: Part[], rng: () => number, r: number, y0: number
   }
 }
 
-/** 리본 같은 얇은 면은 양면 재질로(감김 방향 무관) */
+/**
+ * 평평한 리본의 삼각형이 아래를 향하면(감김 반대) 뒤집는다. 양면 재질은 뒷면에서 법선을 뒤집어
+ * 조명이 어두워지므로(강·길이 회색·갈색으로 보임) 앞면이 위를 향하게 맞춘다. 세로 면(폭포)은 그대로.
+ */
+function faceUp(geo: THREE.BufferGeometry): void {
+  const idx = geo.index;
+  if (!idx || idx.count < 3) return;
+  const p = geo.attributes.position;
+  const a = new THREE.Vector3().fromBufferAttribute(p, idx.getX(0));
+  const b = new THREE.Vector3().fromBufferAttribute(p, idx.getX(1));
+  const c = new THREE.Vector3().fromBufferAttribute(p, idx.getX(2));
+  const n = new THREE.Vector3().subVectors(b, a).cross(new THREE.Vector3().subVectors(c, a));
+  if (n.y >= 0 || Math.abs(n.y) < 0.7 * n.length()) return; // 수평 리본만 (세로 폭포 면은 건드리지 않음)
+  for (let i = 0; i + 2 < idx.count; i += 3) {
+    const t = idx.getX(i + 1);
+    idx.setX(i + 1, idx.getX(i + 2));
+    idx.setX(i + 2, t);
+  }
+  idx.needsUpdate = true;
+}
+
+/** 리본 같은 얇은 면은 양면 재질로(감김 방향 무관) + 앞면이 위를 향하게 */
 export function doubleSided(ctx: KitContext, role: Role, geo: THREE.BufferGeometry): { mesh: THREE.Mesh; dispose(): void } {
+  faceUp(geo);
   const mat = ctx.style.material(role, { side: THREE.DoubleSide });
   const mesh = new THREE.Mesh(geo, mat);
   mesh.name = role;

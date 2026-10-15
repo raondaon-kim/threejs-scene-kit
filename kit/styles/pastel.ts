@@ -28,7 +28,7 @@ const PALETTE: Record<Role, string> = {
 const BASE: SkyColors = {
   top: '#a9b8ee',
   horizon: '#f6c9d6',
-  bottom: '#e9d6f0',
+  bottom: '#c9cff2',
   sun: '#fff0d6',
   fog: '#f3d9e4',
   ambient: '#fff4ec',
