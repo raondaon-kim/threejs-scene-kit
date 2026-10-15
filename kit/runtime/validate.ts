@@ -1,5 +1,5 @@
 import { EASES } from './easing';
-import { BUILTIN_TEXTURES } from '../textures/names';
+import { BACKGROUND_PRESETS, BUILTIN_TEXTURES } from '../textures/names';
 import { ALL_ROLES, ANIMS, CAMERA_MOVES, ELEMENT_ROLES, SKY_PRESETS, STYLE_NAMES, TRACK_PATHS, type TrackPath } from './types';
 
 export interface Issue {
@@ -36,7 +36,8 @@ const KEYS = {
   look: ['surfaces', 'strength'],
   surface: ['texture', 'tile', 'strength', 'flow'],
   meta: ['width', 'height', 'fps', 'duration', 'seed', 'projection'],
-  environment: ['sky', 'terrain', 'trees', 'water', 'ground'],
+  environment: ['sky', 'terrain', 'trees', 'water', 'ground', 'background'],
+  background: ['kind', 'preset', 'colors', 'sun', 'seed'],
   ground: ['size'],
   sky: ['preset'],
   terrain: ['size', 'height', 'roughness', 'flatRadius'],
@@ -73,6 +74,21 @@ function validateEnvironment(env: unknown, err: Err) {
   }
   for (const k of ['terrain', 'trees', 'water', 'ground'] as const) {
     if (env[k] !== undefined && !isObj(env[k])) err(`environment.${k}`, '객체여야 함');
+  }
+  if (env.background !== undefined) {
+    const b = env.background;
+    const p = 'environment.background';
+    if (!isObj(b)) err(p, "객체여야 함 (예: { kind: 'meshGradient', preset: 'sunset' })");
+    else {
+      knownKeys(err, b, p, KEYS.background);
+      oneOf(err, `${p}.kind`, b.kind, ['meshGradient']);
+      if (b.preset !== undefined) oneOf(err, `${p}.preset`, b.preset, BACKGROUND_PRESETS);
+      if (b.colors !== undefined && !(Array.isArray(b.colors) && b.colors.length >= 2 && b.colors.length <= 6 && b.colors.every((c) => typeof c === 'string' && /^#[0-9a-fA-F]{6}$/.test(c)))) {
+        err(`${p}.colors`, "'#rrggbb' 색 2~6개 배열이어야 함");
+      }
+      if (b.sun !== undefined && typeof b.sun !== 'boolean') err(`${p}.sun`, 'true 또는 false');
+      if (b.seed !== undefined && !Number.isInteger(b.seed)) err(`${p}.seed`, '정수여야 함');
+    }
   }
   const t = isObj(env.terrain) ? env.terrain : undefined;
   numIn(err, t, 'environment.terrain', 'size', 10, 2000);

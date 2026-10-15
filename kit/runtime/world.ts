@@ -10,7 +10,7 @@ import { cameraPose, DEFAULT_FOV } from './camera';
 import { followState } from './motion';
 import { elementRegistry } from './registry';
 import { deriveSeed, rngFor } from './rng';
-import { applySurface, resolveSurfaces } from './surface';
+import { applySurface, backgroundColors, resolveSurfaces } from './surface';
 import { textureRegistry, type TextureProvider } from '../textures';
 import { createLights, type Look } from './style';
 import { elementState, findShot, sampleTrack } from './timeline';
@@ -152,7 +152,11 @@ export function buildWorld(def: SceneDef, opts: WorldOptions): { world: World | 
     if (h.update) updaters.push((t) => h.update!(t));
   };
 
-  addEnv(createSky(sky), false, false);
+  // 배경: 메쉬 그라디언트(provider 필요)면 화면 배경, 아니면 구형 하늘
+  if (env.background && opts.textures) {
+    const colors = backgroundColors(env.background, style, env.sky?.preset ?? 'day');
+    scene.background = opts.textures.background(env.background, colors, opts.aspect, env.background.seed ?? deriveSeed(def.meta.seed, 'bg'));
+  } else addEnv(createSky(sky), false, false);
   const lights = createLights(sky, style);
   for (const l of lights) scene.add(l);
   const sun = lights.find((l) => (l as THREE.DirectionalLight).isDirectionalLight) as THREE.DirectionalLight;

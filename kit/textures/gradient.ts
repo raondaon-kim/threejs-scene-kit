@@ -4,7 +4,7 @@ import type { SkyPreset } from '../runtime/types';
 import type { BackgroundPreset } from './types';
 
 /** 배경 프리셋 → 스타일 하늘색 [top, horizon, bottom, sun]. sunset은 dusk를 더 따뜻하게 */
-export function presetColors(style: Style, preset: BackgroundPreset): string[] {
+export function presetColors(style: Style, preset: BackgroundPreset | SkyPreset): string[] {
   const sky = style.sky((preset === 'sunset' ? 'dusk' : preset) as SkyPreset);
   if (preset === 'sunset') return [sky.top, sky.horizon, '#ffd2b0', sky.bottom, sky.sun];
   return [sky.top, sky.horizon, sky.bottom, sky.sun];

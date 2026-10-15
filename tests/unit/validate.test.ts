@@ -164,3 +164,12 @@ describe('v0.4 look 검증', () => {
   });
 });
 
+describe('v0.4 background 검증', () => {
+  it('kind·preset·colors·sun·seed (Review Focus 3)', () => {
+    const bad = { ...good(), environment: { background: { kind: 'blobs', preset: 'noon', colors: ['#fff', 'red'], sun: 'yes', seed: 1.5, foo: 1 } } };
+    expect(paths(bad)).toEqual(expect.arrayContaining(['environment.background.kind', 'environment.background.preset', 'environment.background.colors', 'environment.background.sun', 'environment.background.seed', 'environment.background.foo']));
+    expect(paths({ ...good(), environment: { background: { kind: 'meshGradient', colors: ['#ffffff'] } } })).toContain('environment.background.colors');
+    expect(paths({ ...good(), environment: { background: { kind: 'meshGradient', preset: 'sunset', sun: true } } })).toEqual([]);
+  });
+});
+

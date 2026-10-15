@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import * as THREE from 'three';
 import { buildWorld } from '../../kit/runtime/world';
-import { resolveSurfaces } from '../../kit/runtime/surface';
+import { backgroundColors, resolveSurfaces } from '../../kit/runtime/surface';
 import { getStyle } from '../../kit/styles';
 import { textureRegistry } from '../../kit/textures';
 import type { TextureProvider } from '../../kit/textures';
@@ -108,5 +108,42 @@ describe('표면 질감 (look.surfaces)', () => {
     buildWorld(scene('pastel', [{ id: 'c', type: 'cottage' }]), { quality: 'preview', aspect: 1, textures: a }).world!.dispose();
     buildWorld(scene('pastel', [{ id: 'c', type: 'cottage' }]), { quality: 'preview', aspect: 1, textures: b }).world!.dispose();
     expect(a.calls).toEqual(b.calls);
+  });
+});
+
+describe('메쉬 그라디언트 배경 (environment.background)', () => {
+  const skyDome = (s: THREE.Scene) => {
+    let n = 0;
+    s.traverse((o) => {
+      const m = o as THREE.Mesh;
+      if (m.isMesh && (m.material as THREE.Material).type === 'ShaderMaterial' && (m.material as THREE.ShaderMaterial).side === THREE.BackSide) n++;
+    });
+    return n;
+  };
+  it('provider가 그린 텍스처를 scene.background로, 구형 하늘 생략', () => {
+    const calls: Array<{ colors: string[]; aspect: number; sun?: boolean }> = [];
+    const p = { ...fake(), background(spec: { sun?: boolean }, colors: string[], aspect: number) { calls.push({ colors, aspect, sun: spec.sun }); return new THREE.DataTexture(new Uint8Array([1, 2, 3, 255]), 1, 1); } };
+    const def = scene('pastel', [], { environment: { sky: { preset: 'day' }, background: { kind: 'meshGradient', preset: 'sunset', sun: true } } });
+    const { world } = buildWorld(def, { quality: 'preview', aspect: 16 / 9, textures: p });
+    expect((world!.scene.background as THREE.Texture).isTexture).toBe(true);
+    expect(skyDome(world!.scene)).toBe(0);
+    expect(calls[0].aspect).toBeCloseTo(16 / 9);
+    expect(calls[0].sun).toBe(true);
+    expect(calls[0].colors.length).toBeGreaterThanOrEqual(4);
+    world!.dispose();
+  });
+  it('colors 지정이 우선, provider 없으면 기존 구형 하늘', () => {
+    const got: string[][] = [];
+    const p = { ...fake(), background(_s: unknown, colors: string[]) { got.push(colors); return new THREE.DataTexture(new Uint8Array([1, 2, 3, 255]), 1, 1); } };
+    const def = scene('pastel', [], { environment: { background: { kind: 'meshGradient', colors: ['#112233', '#445566'] } } });
+    buildWorld(def, { quality: 'preview', aspect: 1, textures: p }).world!.dispose();
+    expect(got[0]).toEqual(['#112233', '#445566']);
+    const { world } = buildWorld(def, { quality: 'preview', aspect: 1 });
+    expect(skyDome(world!.scene)).toBe(1);
+    world!.dispose();
+  });
+  it('backgroundColors: 프리셋은 스타일 하늘색에서', () => {
+    expect(backgroundColors({ kind: 'meshGradient', preset: 'day' }, getStyle('pastel'), 'day')).toEqual(['#a9b8ee', '#f6c9d6', '#c9cff2', '#fff0d6']);
+    expect(backgroundColors({ kind: 'meshGradient' }, getStyle('pastel'), 'dusk')[0]).toBe(getStyle('pastel').sky('dusk').top);
   });
 });

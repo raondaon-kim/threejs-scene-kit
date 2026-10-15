@@ -1,7 +1,7 @@
 import type * as THREE from 'three';
 import type { EaseName } from './easing';
 import type { Style } from './style';
-import type { TextureDef } from '../textures/types';
+import type { BackgroundSpec, TextureDef } from '../textures/types';
 
 export type Vec3 = [number, number, number];
 
@@ -93,6 +93,8 @@ export interface EnvironmentDef {
   water?: { level?: number; size?: number };
   /** 평평한 바닥판 (clay 장면용) */
   ground?: { size?: number };
+  /** 화면 배경 (메쉬 그라디언트). 있으면 구형 하늘 대신 */
+  background?: BackgroundSpec;
 }
 
 export interface SceneMeta {

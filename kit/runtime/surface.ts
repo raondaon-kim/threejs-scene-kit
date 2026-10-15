@@ -1,7 +1,8 @@
 import * as THREE from 'three';
-import type { TextureDef } from '../textures/types';
+import { presetColors } from '../textures/gradient';
+import type { BackgroundSpec, TextureDef } from '../textures/types';
 import type { Style } from './style';
-import type { LookDef, Role, SurfaceRef } from './types';
+import type { LookDef, Role, SkyPreset, SurfaceRef } from './types';
 
 export interface ResolvedSurface {
   texture: string;
@@ -87,4 +88,10 @@ export function applySurface(mat: THREE.Material, tex: THREE.Texture, s: Resolve
   mat.userData.surfaceTime = time;
   mat.needsUpdate = true;
   return true;
+}
+
+/** 배경 색: colors가 있으면 그것, 없으면 프리셋(또는 장면 하늘 프리셋)의 스타일 하늘색 */
+export function backgroundColors(spec: BackgroundSpec, style: Style, skyPreset: SkyPreset): string[] {
+  if (spec.colors?.length) return [...spec.colors];
+  return presetColors(style, spec.preset ?? skyPreset);
 }
