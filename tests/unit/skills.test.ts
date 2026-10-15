@@ -109,5 +109,11 @@ describe('skills', () => {
     const custom = readFileSync(join(ROOT, 'skills', 'scene-custom', 'SKILL.md'), 'utf8');
     for (const k of ['defineTexture', 'customTextures', 'randomSeed', 'frameCount']) expect(custom, k).toContain(k);
   });
+  it('최종 리뷰 I-4: grass·scatter·tint 문서 (kit 소스를 읽지 않아도 되게)', () => {
+    const d = readFileSync(join(ROOT, 'skills', 'scene-modules', 'references', 'detail.md'), 'utf8');
+    for (const k of ['center', 'radius', 'count', 'height', 'avoid', 'avoidWidth', 'role', 'variant', '20000', '절대 좌표', 'idPrefix', 'rotate', 'minDist', 'seed']) expect(d, k).toContain(k);
+    expect(readFileSync(join(ROOT, 'skills', 'scene-modules', 'SKILL.md'), 'utf8')).toContain('references/detail.md');
+    expect(readFileSync(join(ROOT, 'skills', 'scene-modules', 'references', 'fairytale.md'), 'utf8')).toContain('tint');
+  });
 });
 

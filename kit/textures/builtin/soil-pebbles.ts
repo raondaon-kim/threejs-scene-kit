@@ -6,7 +6,7 @@ export const soilPebbles = defineTexture({
   name: 'soil-pebbles',
   tile: 2.5,
   draw(p, { size }) {
-    fillPixels(p, size, (x, y) => 128 + (tileNoise(p, x, y, size, 6) - 0.5) * 50 + (tileNoise(p, x + 13, y + 71, size, 30) - 0.5) * 24);
+    fillPixels(p, size, (x, y) => 128 + (tileNoise(p, x, y, size, 6) - 0.5) * 50 + (tileNoise(p, x, y, size, 30, 13, 71) - 0.5) * 24);
     p.noStroke();
     const n = Math.round((size * size) / 1200);
     for (let i = 0; i < n; i++) {

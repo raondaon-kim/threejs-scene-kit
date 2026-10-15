@@ -28,14 +28,16 @@ export function resolveSurfaces(style: Style, look: LookDef | undefined, defs: M
   return out;
 }
 
+// uSurfFix = 휴지 포즈 · 현재 포즈⁻¹ → 움직이는 물체에서도 질감이 물체에 붙는다 (정적이면 단위행렬)
 const VERT_DECL = /* glsl */ `
+uniform mat4 uSurfFix;
 varying vec3 vSurfPos;
 varying vec3 vSurfNrm;`;
 const VERT_BODY = /* glsl */ `
 {
-  mat4 surfModel = modelMatrix;
+  mat4 surfModel = uSurfFix * modelMatrix;
   #ifdef USE_INSTANCING
-    surfModel = modelMatrix * instanceMatrix;
+    surfModel = surfModel * instanceMatrix;
   #endif
   vSurfPos = (surfModel * vec4(transformed, 1.0)).xyz;
   vSurfNrm = normalize(mat3(surfModel) * objectNormal);
@@ -73,6 +75,7 @@ export function applySurface(mat: THREE.Material, tex: THREE.Texture, s: Resolve
     uSurfStrength: { value: s.strength },
     uSurfFlow: { value: new THREE.Vector2(s.flow[0], s.flow[1]) },
     uSurfTime: time,
+    uSurfFix: { value: new THREE.Matrix4() },
   };
   mat.onBeforeCompile = (shader) => {
     Object.assign(shader.uniforms, uniforms);
@@ -86,6 +89,7 @@ export function applySurface(mat: THREE.Material, tex: THREE.Texture, s: Resolve
   mat.customProgramCacheKey = () => 'kit-surface-v1';
   mat.userData.surface = s.texture;
   mat.userData.surfaceTime = time;
+  mat.userData.surfaceFix = uniforms.uSurfFix.value;
   mat.needsUpdate = true;
   return true;
 }

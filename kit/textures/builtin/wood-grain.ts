@@ -9,7 +9,7 @@ export const woodGrain = defineTexture({
     fillPixels(p, size, (x, y) => {
       const warp = tileNoise(p, x, y, size, 3) * 18;
       const band = Math.sin(((x + warp) / size) * Math.PI * 2 * 14);
-      return 128 + band * 26 + (tileNoise(p, x + 51, y + 7, size, 20) - 0.5) * 30;
+      return 128 + band * 26 + (tileNoise(p, x, y, size, 20, 51, 7) - 0.5) * 30;
     });
     p.noFill();
     for (let i = 0; i < 4; i++) {

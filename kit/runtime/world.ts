@@ -214,6 +214,7 @@ export function buildWorld(def: SceneDef, opts: WorldOptions): { world: World | 
   const focus = computeFocus(items);
   // 표면 질감: provider가 있을 때만 (메시 이름 = role 규약, buildByRole·리본)
   const surfaceTime = { value: 0 };
+  const surfaced: Array<{ mesh: THREE.Mesh; fix: THREE.Matrix4; rest: THREE.Matrix4 | null }> = [];
   if (opts.textures) {
     let defs;
     try {
@@ -230,7 +231,7 @@ export function buildWorld(def: SceneDef, opts: WorldOptions): { world: World | 
         const s = surfaces.get(mesh.name as never);
         if (!s) return;
         const tex = opts.textures!.surface(defs.get(s.texture)!, deriveSeed(def.meta.seed, `tex:${s.texture}`));
-        applySurface(mesh.material, tex, s, surfaceTime);
+        if (applySurface(mesh.material, tex, s, surfaceTime)) surfaced.push({ mesh, fix: mesh.material.userData.surfaceFix, rest: null });
       });
     }
   }
@@ -297,7 +298,17 @@ export function buildWorld(def: SceneDef, opts: WorldOptions): { world: World | 
       }
       it.h.update?.(t);
     }
+    if (surfaced.length) {
+      // 질감 보정: 휴지 포즈(t=0) · 현재 포즈⁻¹ (움직이는 메시도 질감이 물체에 붙음)
+      scene.updateMatrixWorld(true);
+      for (const s of surfaced) if (s.rest) s.fix.copy(s.rest).multiply(tmpInv.copy(s.mesh.matrixWorld).invert());
+    }
   };
+  const tmpInv = new THREE.Matrix4();
+  if (surfaced.length) {
+    setTime(0);
+    for (const s of surfaced) s.rest = s.mesh.matrixWorld.clone();
+  }
 
   return {
     world: {

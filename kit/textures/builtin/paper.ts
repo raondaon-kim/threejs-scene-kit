@@ -6,6 +6,6 @@ export const paper = defineTexture({
   name: 'paper',
   tile: 6,
   draw(p, { size }) {
-    fillPixels(p, size, (x, y) => 128 + (tileNoise(p, x, y, size, 3) - 0.5) * 30 + (tileNoise(p, x + 211, y + 5, size, 40) - 0.5) * 22);
+    fillPixels(p, size, (x, y) => 128 + (tileNoise(p, x, y, size, 3) - 0.5) * 30 + (tileNoise(p, x, y, size, 40, 211, 5) - 0.5) * 22);
   },
 });

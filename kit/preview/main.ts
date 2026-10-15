@@ -47,7 +47,7 @@ function pixelsOf(c: HTMLCanvasElement): Uint8ClampedArray {
   return c.getContext('2d')!.getImageData(0, 0, c.width, c.height).data;
 }
 
-/** 결정성 해시 + 이어짐 지표: 가장자리(마지막→처음) 평균 차이와, 내부에서 가장 큰 인접 줄 평균 차이 */
+/** 결정성 해시 + 이어짐 지표: 가장자리(마지막→처음) 평균 차이와, 내부 인접 줄 평균 차이의 99번째 백분위 */
 function probe(c: HTMLCanvasElement) {
   const d = pixelsOf(c);
   const n = c.width;
@@ -64,12 +64,16 @@ function probe(c: HTMLCanvasElement) {
     for (let k = 0; k < n; k++) s += Math.abs(at(k, a) - at(k, b));
     return s / n;
   };
-  let innerX = 0;
-  let innerY = 0;
+  // 내부 인접 줄 차이의 99번째 백분위 (이음선 판정 기준: 패턴 경계는 포함, 고립된 점프는 제외)
+  const p99 = (vals: number[]) => vals.sort((a, b) => a - b)[Math.min(vals.length - 1, Math.floor(vals.length * 0.99))];
+  const cols: number[] = [];
+  const rows: number[] = [];
   for (let i = 0; i + 1 < n; i++) {
-    innerX = Math.max(innerX, colDiff(i, i + 1));
-    innerY = Math.max(innerY, rowDiff(i, i + 1));
+    cols.push(colDiff(i, i + 1));
+    rows.push(rowDiff(i, i + 1));
   }
+  const innerX = p99(cols);
+  const innerY = p99(rows);
   return { hash, seamX: colDiff(n - 1, 0), seamY: rowDiff(n - 1, 0), innerX, innerY };
 }
 

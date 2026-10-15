@@ -7,7 +7,7 @@ export const rockGrain = defineTexture({
   tile: 3,
   draw(p, { size }) {
     p.noiseDetail(4, 0.5);
-    fillPixels(p, size, (x, y) => 128 + (tileNoise(p, x, y, size, 4) - 0.5) * 90 + (tileNoise(p, x + 97, y + 31, size, 24) - 0.5) * 50);
+    fillPixels(p, size, (x, y) => 128 + (tileNoise(p, x, y, size, 4) - 0.5) * 90 + (tileNoise(p, x, y, size, 24, 97, 31) - 0.5) * 50);
     p.noFill();
     for (let i = 0; i < 26; i++) {
       let x = p.random(size);

@@ -262,8 +262,9 @@ step('textures: 결정성·이어짐·swatch', () => {
   for (const [n, p] of Object.entries(out.probes)) {
     if (!p.same) bad.push(`${n}: 같은 시드 다른 결과`);
     if (!p.differs) bad.push(`${n}: 시드가 달라도 같음`);
-    // 가장자리 차이가 내부에서 가장 큰 인접 차이보다 크면 이음선 (무늬 경계가 있는 기와도 공정하게)
-    if (p.seamX > p.innerX + 8 || p.seamY > p.innerY + 8) bad.push(`${n}: 이음선 ${p.seamX.toFixed(1)}/${p.seamY.toFixed(1)} > 내부 ${p.innerX.toFixed(1)}/${p.innerY.toFixed(1)}`);
+    // 가장자리 차이가 내부 인접 차이 99백분위의 1.5배(+2)를 넘으면 이음선 (기와처럼 주기적 경계는 백분위에 포함됨)
+    const lim = (q) => Math.max(q * 1.5, q + 2);
+    if (p.seamX > lim(p.innerX) || p.seamY > lim(p.innerY)) bad.push(`${n}: 이음선 ${p.seamX.toFixed(1)}/${p.seamY.toFixed(1)} > 내부 ${p.innerX.toFixed(1)}/${p.innerY.toFixed(1)}`);
   }
   if (bad.length) throw new Error(bad.join('; '));
   return `${out.textures.length}종, 이음/내부 최대 ${Object.entries(out.probes).map(([n, p]) => `${n} ${Math.max(p.seamX, p.seamY).toFixed(0)}/${Math.max(p.innerX, p.innerY).toFixed(0)}`).join(', ')}`;

@@ -72,6 +72,8 @@ description: threejs-scene-kit 장면에 넣을 수 있는 요소와 환경의 �
 | grass | 요소 `{ type: 'grass', params: { center, radius, count, avoid } }` | 인스턴싱 풀포기(최대 20000), 강·길 points를 avoid로 비움 |
 | scatter | `import { scatter } from './kit/layout'` → `elements: [...scatter({ type, count, center, radius, seed, minDist, avoid })]` | 나무·꽃·바위 흩뿌리기(반복문·해시 대신), variant 자동 |
 
+- grass·scatter 전체 옵션: `references/detail.md`
+
 ## 환경 (environment)
 
 | 키 | 내용 |

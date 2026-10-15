@@ -147,3 +147,31 @@ describe('메쉬 그라디언트 배경 (environment.background)', () => {
     expect(backgroundColors({ kind: 'meshGradient' }, getStyle('pastel'), 'dusk')[0]).toBe(getStyle('pastel').sky('dusk').top);
   });
 });
+
+describe('움직이는 요소에서 질감이 물체에 붙음 (최종 리뷰 I-3: shower-door)', () => {
+  it('surfaceFix · matrixWorld = 휴지 포즈(t=0) — 시간·seek과 무관, 정적 메시는 단위행렬', () => {
+    const def = scene('pastel', [
+      { id: 'mill', type: 'windmill', params: { speed: 0.5 } },
+      { id: 'mover', type: 'cottage', tracks: { 'position.x': [[0, 0], [10, 20]] } },
+      { id: 'still', type: 'cottage', at: [30, 0, 0] },
+    ]);
+    const { world } = buildWorld(def, { quality: 'preview', aspect: 1, textures: fake() });
+    const meshOf = (id: string, role: string) => world!.scene.getObjectByName(id)!.getObjectByName(role) as THREE.Mesh;
+    const sails = (world!.scene.getObjectByName('mill')!.getObjectByName('sails')!.getObjectByName('wood')) as THREE.Mesh;
+    const restOf = (m: THREE.Mesh) => {
+      const fix = (m.material as THREE.Material).userData.surfaceFix as THREE.Matrix4;
+      return fix.clone().multiply(m.matrixWorld);
+    };
+    world!.setTime(0);
+    const r0 = restOf(sails);
+    const m0 = restOf(meshOf('mover', 'body'));
+    for (const t of [1.3, 7, 2.2]) {
+      world!.setTime(t);
+      expect(restOf(sails).equals(r0) || restOf(sails).elements.every((v, i) => Math.abs(v - r0.elements[i]) < 1e-6)).toBe(true);
+      expect(restOf(meshOf('mover', 'body')).elements.every((v, i) => Math.abs(v - m0.elements[i]) < 1e-6)).toBe(true);
+      const fixStill = (meshOf('still', 'body').material as THREE.Material).userData.surfaceFix as THREE.Matrix4;
+      expect(fixStill.elements.every((v, i) => Math.abs(v - new THREE.Matrix4().elements[i]) < 1e-9)).toBe(true);
+    }
+    world!.dispose();
+  });
+});
