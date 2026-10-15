@@ -23,9 +23,10 @@ Codex CLI(`codex exec`)의 이미지 생성으로 샷별 콘셉트 이미지를 
 | shots[].at | `still --compare`에서 렌더할 장면 시각(초). 보통 해당 scene 샷의 중간 |
 | shots[].prompt | 샷 내용(영문). 등장 오브젝트·카메라 거리·배치를 구체적으로 |
 
-## 자동 제약 (기본 켜짐)
+## 자동 제약 (기본 켜짐, 물류 키트·ortho 장면 전용)
 
 모든 샷 프롬프트에 두 줄이 자동으로 들어간다 (Style 뒤, Content 앞).
+**개념·강의 장면(라벨·도형·그래프, perspective)은 `"vocab": "free", "camera": "free"`로 끈다.** 장면과 맞지 않으면 storyboard 출력 `warnings`가 알려준다.
 
 - `Camera:` 렌더와 같은 고정 아이소 카메라 (ortho, 정면 오른쪽 30°, 고도 약 37° = `target + [45, 67, 78]`)
 - `Objects:` 키트에 있는 물체만 허용 + 승용차·사람·글자·원경 마을·물·다리 금지

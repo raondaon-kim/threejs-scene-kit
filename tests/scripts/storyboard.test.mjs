@@ -58,6 +58,19 @@ describe('storyboard.mjs (가짜 codex)', () => {
     expect(p.s2).not.toMatch(/^Camera:/m);
     expect(p.s2).toMatch(/^Objects:/m);
   });
+  it('물류 요소가 없거나 ortho가 아닌 장면에 기본 제약 → 경고 (최종 리뷰 I1)', () => {
+    // init 기본 템플릿 = 광합성 강의 장면 (perspective, 물류 요소 없음)
+    const { code, out } = run(['--project', dir, '--shot', 's1']);
+    expect(code).toBe(0);
+    expect(out.warnings.join('\n')).toMatch(/vocab.*free/);
+    expect(out.warnings.join('\n')).toMatch(/camera.*free/);
+    writeFileSync(join(dir, 'storyboard.json'), JSON.stringify({ aspect: '16:9', style: 'clay', vocab: 'free', camera: 'free', shots: [{ id: 's1', prompt: 'a' }] }));
+    expect(run(['--project', dir]).out.warnings).toEqual([]);
+  });
+  it('물류 + ortho 장면은 경고 없음', () => {
+    writeFileSync(join(dir, 'scene.ts'), "export default { meta: { projection: 'ortho' }, elements: [{ id: 'w', type: 'warehouse' }] };\n");
+    expect(run(['--project', dir, '--shot', 's1']).out.warnings).toEqual([]);
+  });
   it('잘못된 vocab/camera 값 거부', () => {
     writeFileSync(join(dir, 'storyboard.json'), JSON.stringify({ aspect: '16:9', style: 'clay', vocab: 'all', shots: [{ id: 's1', prompt: 'a', camera: 'top' }] }));
     const { code, out } = run(['--project', dir]);

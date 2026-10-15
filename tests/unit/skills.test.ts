@@ -57,4 +57,12 @@ describe('skills', () => {
     const sb = readFileSync(join(ROOT, 'skills', 'scene-direct', 'references', 'storyboard.md'), 'utf8');
     for (const k of ['"vocab"', '"camera"', '"free"', 'Objects:', 'Camera:']) expect(sb).toContain(k);
   });
+  it('최종 리뷰: 앵커 예시는 그대로 붙여도 동작 (add 정의, WH 공유), 제약은 물류 장면 전용 명시, 버전 0.2.1', () => {
+    const lg = readFileSync(join(ROOT, 'skills', 'scene-modules', 'references', 'logistics.md'), 'utf8');
+    expect(lg).toContain('const add = (e: ElementDef) => els.push(e);');
+    expect(lg).toContain('width: WH.width, depth: WH.depth, docks: WH.docks');
+    const sb = readFileSync(join(ROOT, 'skills', 'scene-direct', 'references', 'storyboard.md'), 'utf8');
+    expect(sb).toMatch(/물류.*장면 전용|개념.*free/);
+    expect(JSON.parse(readFileSync(join(ROOT, '.claude-plugin', 'plugin.json'), 'utf8')).version).toBe('0.2.1');
+  });
 });

@@ -2,7 +2,7 @@ import { spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { findCodex, runCodex } from './lib/codex.mjs';
-import { CAMERA_ISO, vocabSentence } from './lib/kit-vocab.mjs';
+import { CAMERA_ISO, KIT_VOCAB, vocabSentence } from './lib/kit-vocab.mjs';
 import { run, ScriptError } from './lib/output.mjs';
 import { resolveProject } from './lib/project.mjs';
 
@@ -14,6 +14,7 @@ const HELP = `
                      "shots": [{ "id": "s1", "at": 2.5, "prompt": "샷 내용(영문)" }] }
   기본으로 프롬프트에 키트 목록(vocab)과 고정 아이소 카메라(camera)를 넣는다.
   끄기: "vocab": "free", "camera": "free" (전역 또는 shots[] 단위, 샷 값 우선)
+  제약은 물류 키트·ortho 장면 전용. 개념·강의(perspective) 장면은 둘 다 free (안 맞으면 warnings로 알림)
   codex 위치: CODEX_EXE → PATH → VS Code/Cursor 확장 동봉본.  샷 하나에 보통 1~2분.
 `;
 
@@ -23,6 +24,24 @@ const modeError = (obj, path, errors) => {
     if (obj?.[k] !== undefined && !allowed.includes(obj[k])) errors.push({ path: `${path}.${k}`, message: `${allowed.map((a) => `'${a}'`).join(' 또는 ')}이어야 함` });
   }
 };
+
+/** 기본 제약(물류 키트·아이소)이 장면과 맞지 않으면 경고. scene.ts 텍스트만 본다(실행하지 않음) */
+function constraintWarnings(dir, sb, shots) {
+  const file = join(dir, 'scene.ts');
+  if (!existsSync(file)) return [];
+  const src = readFileSync(file, 'utf8');
+  const types = Object.keys(KIT_VOCAB).join('|');
+  const hasKit = new RegExp(`type\\s*:\\s*['"\`](${types})['"\`]`).test(src);
+  const isOrtho = /projection\s*:\s*['"`]ortho['"`]/.test(src);
+  const warnings = [];
+  if (!hasKit && shots.some((s) => (s.vocab ?? sb.vocab ?? 'kit') === 'kit')) {
+    warnings.push('scene.ts에 물류 키트 요소가 없는데 키트 목록 제약(vocab)이 켜져 있음. 개념·강의 장면이면 storyboard.json에 "vocab": "free"');
+  }
+  if (!isOrtho && shots.some((s) => (s.camera ?? sb.camera ?? 'iso') === 'iso')) {
+    warnings.push('scene.ts가 ortho가 아닌데 아이소 카메라 제약(camera)이 켜져 있음. perspective 장면이면 storyboard.json에 "camera": "free"');
+  }
+  return warnings;
+}
 
 function loadStoryboard(dir) {
   const file = join(dir, 'storyboard.json');
@@ -121,5 +140,5 @@ run(async ({ opts }) => {
       { shots: summary, sheet },
     );
   }
-  return { shots: summary, sheet, codex: codex.source, warnings: sheet ? [] : ['시트를 만들지 못함 (ffmpeg 확인)'] };
+  return { shots: summary, sheet, codex: codex.source, warnings: [...constraintWarnings(dir, sb, shots), ...(sheet ? [] : ['시트를 만들지 못함 (ffmpeg 확인)'])] };
 }, HELP);

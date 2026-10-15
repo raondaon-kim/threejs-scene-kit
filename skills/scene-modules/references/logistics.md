@@ -78,10 +78,15 @@ clay 스타일에서 movie2풍 클레이 룩. 다른 스타일에서도 동작�
 
 ```ts
 import { warehouseAnchors, lane, type XZ } from './kit/anchors';
+import type { ElementDef, Vec3 } from './kit/runtime/types';
 
-const WH = { at: [0, 0, 0] as [number, number, number], rotation: 0, width: 30, depth: 16, docks: 4 };
+const els: ElementDef[] = [];                       // defineScene({ …, elements: els })
+const add = (e: ElementDef) => els.push(e);
+
+const WH = { at: [0, 0, 0] as Vec3, rotation: 0, width: 30, depth: 16, docks: 4 };
 const wh = warehouseAnchors(WH);
-add({ id: 'wh', type: 'warehouse', at: WH.at, rotation: [0, WH.rotation, 0], params: { width: 30, depth: 16, docks: 4 } });
+add({ id: 'wh', type: 'warehouse', at: WH.at, rotation: [0, WH.rotation, 0],
+  params: { width: WH.width, depth: WH.depth, docks: WH.docks } });
 add({ id: 'truck-a', type: 'truck', ...wh.truck(1, { length: 9 }), params: { length: 9 } });  // 도크 1 정차
 const b = wh.backIn(2, { length: 9, from: 13 });                                              // 도크 2 후진 진입
 add({ id: 'truck-in', type: 'truck', at: b.at, rotation: b.rotation, params: { length: 9 },
