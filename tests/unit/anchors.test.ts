@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { describe, it, expect } from 'vitest';
-import { lane, warehouseAnchors, type XZ } from '../../kit/anchors';
+import { bridgeOn, lane, warehouseAnchors, type XZ } from '../../kit/anchors';
 import { dockPositions } from '../../kit/modules/logistics/warehouse';
 
 type V3 = [number, number, number];
@@ -100,5 +100,22 @@ describe('lane', () => {
     expect(() => lane([[1, 1], [1, 1]], 1)).toThrow(/2개/);
     expect(() => lane([[0, 0], [NaN, 1]], 1)).toThrow(/숫자/);
     expect(() => lane([[0, 0], [1, 0]], NaN)).toThrow(/offset/);
+  });
+});
+
+describe('bridgeOn', () => {
+  const R: XZ[] = [[0, -10], [0, 0], [10, 10], [20, 10]];
+  it('로컬 X가 강 법선과 평행 (Review Focus 4)', () => {
+    const p = bridgeOn(R, 1);
+    close(p.at, [0, 0, 0]);
+    const yaw = (p.rotation[1] * Math.PI) / 180;
+    const localX = [Math.cos(yaw), -Math.sin(yaw)];
+    const t = [10 - 0, 10 - -10];
+    const l = Math.hypot(t[0], t[1]);
+    const n = [-t[1] / l, t[0] / l];
+    expect(Math.abs(localX[0] * n[0] + localX[1] * n[1])).toBeCloseTo(1, 6);
+  });
+  it('끝점·정수 아님·범위 밖 → 오류', () => {
+    for (const i of [0, 3, 1.5, -1, 9]) expect(() => bridgeOn(R, i)).toThrow(/1\.\.2/);
   });
 });

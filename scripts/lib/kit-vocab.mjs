@@ -7,6 +7,9 @@ export const KIT_ROOT = fileURLToPath(new URL('../../kit/modules/', import.meta.
 /** scene의 아이소 방향 target + [45, 67, 78]: 방위 30°, 고도 약 37° */
 export const CAMERA_ISO = 'Orthographic isometric view (no perspective distortion), looking from the front-right about 30° off the front face, elevated about 37°.';
 
+/** 원근 디오라마(동화 키트 등): 높은 3/4 앵글의 미니어처 모형 */
+export const CAMERA_DIORAMA = 'Perspective miniature diorama view from a high three-quarter angle, the whole scene reads like a small handcrafted model, gentle tilt-shift depth of field.';
+
 const isStr = (v) => typeof v === 'string' && v.length > 0;
 
 export function loadKits(root = KIT_ROOT) {

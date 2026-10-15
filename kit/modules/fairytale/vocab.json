@@ -1,0 +1,22 @@
+{
+  "label": "동화 디오라마",
+  "objects": {
+    "island": "one round floating island with grassy top and rocky cliff sides",
+    "plateau": "a raised grassy terrace with rocky cliff sides",
+    "rock": "rounded boulders",
+    "river": "a winding light-blue river",
+    "waterfall": "waterfalls pouring off the island edge",
+    "path": "winding sandy dirt paths",
+    "bridge": "a stone arch bridge",
+    "castle": "a small castle with round towers and conical lavender roofs",
+    "cottage": "cottages with peach gable roofs and round windows",
+    "mushroom": "red-and-white spotted mushroom houses",
+    "windmill": "a windmill with four sails",
+    "fairytree": "puffy round trees and small conifers",
+    "flowers": "flower patches",
+    "field": "small wheat fields",
+    "fence": "short wooden fences",
+    "cloud": "puffy white clouds"
+  },
+  "avoid": ["people", "animals", "text", "logos", "cars", "modern buildings"]
+}

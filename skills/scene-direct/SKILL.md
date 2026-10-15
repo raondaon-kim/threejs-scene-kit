@@ -27,7 +27,7 @@ allowed-tools:
 ## 흐름
 
 ```
-node "${CLAUDE_PLUGIN_ROOT}/scripts/init.mjs" <폴더> --style clay                  # stylized|minimal|clay
+node "${CLAUDE_PLUGIN_ROOT}/scripts/init.mjs" <폴더> --style clay                  # stylized|minimal|clay|pastel
 npm install --prefix "<폴더>"                                                     # 처음 한 번
 npm exec --prefix "<폴더>" -- playwright install chromium                          # 처음 한 번
 (storyboard.example.json을 참고해 <폴더>/storyboard.json 작성)

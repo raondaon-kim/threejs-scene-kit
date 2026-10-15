@@ -110,3 +110,23 @@ export function lane(points: XZ[], offset: number, opts: { reverse?: boolean } =
     return [p[0] + n[0] * offset * k, p[1] + n[1] * offset * k];
   });
 }
+
+/**
+ * 강 위 다리 배치: 제어점 i(1..n-2)에서 다리(로컬 X로 걸침)가 강을 가로지르도록 at·rotation을 준다.
+ * 다리 방향 = 앞뒤 점 차이로 구한 진행 방향의 법선. 강 요소와 같은 points를 넘긴다.
+ */
+export function bridgeOn(points: XZ[], i: number): Placement {
+  const n = Array.isArray(points) ? points.length : 0;
+  if (n < 3) throw new Error('bridgeOn: 점이 3개 이상 필요함 (양 끝 점에는 다리를 놓지 않음)');
+  if (!Number.isInteger(i) || i < 1 || i > n - 2) throw new Error(`bridgeOn: 인덱스는 1..${n - 2} 정수 (받은 값 ${i})`);
+  for (const p of points) {
+    if (!Array.isArray(p) || p.length !== 2 || !p.every((v) => typeof v === 'number' && Number.isFinite(v))) throw new Error('bridgeOn: 점은 [x, z] 유한한 숫자 쌍');
+  }
+  const [px, pz] = points[i];
+  const tx = points[i + 1][0] - points[i - 1][0];
+  const tz = points[i + 1][1] - points[i - 1][1];
+  if (Math.hypot(tx, tz) < 1e-9) throw new Error('bridgeOn: 앞뒤 점이 같아 방향을 정할 수 없음');
+  // 로컬 X(yaw θ) = (cosθ, −sinθ)가 법선 (−tz, tx)와 같도록: θ = atan2(−tx, −tz)
+  const yaw = (Math.atan2(-tx, -tz) * 180) / Math.PI;
+  return { at: [px, 0, pz], rotation: [0, yaw, 0] };
+}

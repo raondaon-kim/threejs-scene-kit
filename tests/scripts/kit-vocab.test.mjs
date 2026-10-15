@@ -28,7 +28,7 @@ describe('kit-vocab', () => {
       expect(Object.keys(kits.get(name).objects).sort()).toEqual(arr.map((e) => e.type).sort());
     }
     expect(seen.sort()).toEqual([...kits.keys()].sort());
-    expect(seen.length).toBeGreaterThanOrEqual(2);
+    expect(seen).toContain('fairytale');
   });
   it('*_ELEMENTS의 모든 type이 registry BUILTIN_ELEMENTS에 연결됨 (최종 리뷰: 키트 추가 시 registry 누락 방지)', () => {
     const builtin = new Set(BUILTIN_ELEMENTS.map((e) => e.type));

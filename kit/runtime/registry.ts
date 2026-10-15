@@ -1,9 +1,10 @@
 import { CONCEPT_ELEMENTS } from '../modules/concept';
+import { FAIRYTALE_ELEMENTS } from '../modules/fairytale';
 import { LOGISTICS_ELEMENTS } from '../modules/logistics';
 import type { ElementType } from './types';
 import type { TypeInfo } from './validate';
 
-export const BUILTIN_ELEMENTS: readonly ElementType[] = [...CONCEPT_ELEMENTS, ...LOGISTICS_ELEMENTS];
+export const BUILTIN_ELEMENTS: readonly ElementType[] = [...CONCEPT_ELEMENTS, ...LOGISTICS_ELEMENTS, ...FAIRYTALE_ELEMENTS];
 
 export function elementRegistry(custom: ElementType[] = []): Map<string, ElementType> {
   const m = new Map<string, ElementType>();

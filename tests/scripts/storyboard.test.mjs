@@ -94,7 +94,21 @@ describe('storyboard.mjs (가짜 codex)', () => {
     const { code, out } = run(['--project', dir]);
     expect(code).toBe(1);
     const e = out.errors.find((x) => x.path === 'storyboard.kit');
-    expect(e.message).toMatch(/concept, logistics/);
+    expect(e.message).toMatch(/concept, fairytale, logistics/);
+  });
+  it('camera diorama: 원근 디오라마 문장, ortho 장면이면 경고 (v0.3)', () => {
+    sbWith({ kit: 'fairytale', camera: 'diorama' });
+    const r1 = run(['--project', dir]);
+    expect(r1.code).toBe(0);
+    expect(prompts().s1).toMatch(/^Camera: Perspective miniature diorama view/m);
+    expect(r1.out.warnings.join('\n')).not.toMatch(/diorama/);
+    writeFileSync(join(dir, 'scene.ts'), "export default { meta: { projection: 'ortho' }, elements: [{ id: 'c', type: 'castle' }] };\n");
+    expect(run(['--project', dir]).out.warnings.join('\n')).toMatch(/diorama/);
+  });
+  it('알 수 없는 camera 값 오류 메시지에 diorama 포함', () => {
+    sbWith({ camera: 'top' });
+    const { out } = run(['--project', dir]);
+    expect(out.errors.find((e) => e.path === 'storyboard.camera').message).toMatch(/diorama/);
   });
   it('잘못된 vocab/camera 값 거부', () => {
     writeFileSync(join(dir, 'storyboard.json'), JSON.stringify({ aspect: '16:9', style: 'clay', vocab: 'all', shots: [{ id: 's1', prompt: 'a', camera: 'top' }] }));
