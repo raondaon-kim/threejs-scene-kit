@@ -138,9 +138,42 @@ export function place(geo: THREE.BufferGeometry, x: number, y: number, z: number
 
 function normalize(g: THREE.BufferGeometry): THREE.BufferGeometry {
   const n = g.index ? g.toNonIndexed() : g;
-  for (const k of Object.keys(n.attributes)) if (!['position', 'normal', 'uv'].includes(k)) n.deleteAttribute(k);
+  for (const k of Object.keys(n.attributes)) if (!['position', 'normal', 'uv', 'color'].includes(k)) n.deleteAttribute(k);
   if (!n.attributes.uv) n.setAttribute('uv', new THREE.Float32BufferAttribute(new Float32Array(n.attributes.position.count * 2), 2));
   return n;
+}
+
+type RGB = number | [number, number, number];
+const rgb = (v: RGB): [number, number, number] => (typeof v === 'number' ? [v, v, v] : v);
+
+/**
+ * 정점 색 음영: 높이 비율(y0~y1, 기본은 형상 bbox)로 bottom→top RGB 배율을 넣는다.
+ * buildByRole이 팔레트 색에 곱한다(keepColor). 같은 지오메트리를 반환.
+ */
+export function shade(geo: THREE.BufferGeometry, o: { top: RGB; bottom: RGB; y0?: number; y1?: number }): THREE.BufferGeometry {
+  geo.computeBoundingBox();
+  const y0 = o.y0 ?? geo.boundingBox!.min.y;
+  const y1 = o.y1 ?? geo.boundingBox!.max.y;
+  const span = Math.max(1e-6, y1 - y0);
+  const top = rgb(o.top);
+  const bot = rgb(o.bottom);
+  const p = geo.attributes.position;
+  const col = new Float32Array(p.count * 3);
+  for (let i = 0; i < p.count; i++) {
+    const f = Math.min(1, Math.max(0, (p.getY(i) - y0) / span));
+    for (let k = 0; k < 3; k++) col[i * 3 + k] = bot[k] + (top[k] - bot[k]) * f;
+  }
+  geo.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+  return geo;
+}
+
+/** 이미 넣은 정점 색에 RGB 배율을 곱한다 (나무마다 색 흔들림 등) */
+export function tintColors(geo: THREE.BufferGeometry, m: [number, number, number]): THREE.BufferGeometry {
+  const c = geo.attributes.color;
+  if (!c) return geo;
+  for (let i = 0; i < c.count; i++) c.setXYZ(i, c.getX(i) * m[0], c.getY(i) * m[1], c.getZ(i) * m[2]);
+  c.needsUpdate = true;
+  return geo;
 }
 
 /** 같은 역할의 부품을 하나의 메시로 병합한다(draw call 절감). 원본 지오메트리는 해제된다. */
@@ -154,10 +187,17 @@ export function buildByRole(style: Style, parts: Part[]): { group: THREE.Group; 
   const group = new THREE.Group();
   const owned: Array<{ dispose(): void }> = [];
   for (const [role, geos] of byRole) {
+    // 정점 색이 있는 부품이 하나라도 있으면 나머지는 흰색(배율 1)으로 채워 병합
+    const colored = geos.some((g) => g.attributes.color);
+    if (colored) {
+      for (const g of geos) {
+        if (!g.attributes.color) g.setAttribute('color', new THREE.Float32BufferAttribute(new Float32Array(g.attributes.position.count * 3).fill(1), 3));
+      }
+    }
     const merged = geos.length === 1 ? geos[0] : mergeGeometries(geos, false);
     if (!merged) throw new Error(`부품 병합 실패 (role ${role})`);
     if (merged !== geos[0] || geos.length > 1) for (const g of geos) if (g !== merged) g.dispose();
-    const mat = style.material(role);
+    const mat = colored ? style.material(role, { vertexColors: true, keepColor: true }) : style.material(role);
     const mesh = new THREE.Mesh(merged, mat);
     mesh.name = role;
     group.add(mesh);

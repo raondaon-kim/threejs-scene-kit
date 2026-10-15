@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import * as THREE from 'three';
-import { roundedBox, place, buildByRole, wheelGeo, blob, prism, arch, ribbon } from '../../kit/parts';
+import { roundedBox, place, buildByRole, wheelGeo, blob, prism, arch, ribbon, shade } from '../../kit/parts';
 import { rngFor } from '../../kit/runtime/rng';
 import { getStyle } from '../../kit/styles';
 
@@ -53,4 +53,47 @@ describe('parts', () => {
   it('v0.3: ribbon은 parts에서 export', () => {
     expect(typeof ribbon).toBe('function');
   });
+  it('v0.4: shade — 높이 비율로 위·아래 배율, 범위 지정', () => {
+    const g = shade(roundedBox(1, 2, 1, 0.1), { top: 1.2, bottom: [0.5, 0.6, 0.7] });
+    const c = g.attributes.color;
+    const p = g.attributes.position;
+    let lo = -1;
+    let hi = -1;
+    for (let i = 0; i < p.count; i++) {
+      if (lo < 0 || p.getY(i) < p.getY(lo)) lo = i;
+      if (hi < 0 || p.getY(i) > p.getY(hi)) hi = i;
+    }
+    expect([c.getX(lo), c.getY(lo), c.getZ(lo)].map((v) => +v.toFixed(3))).toEqual([0.5, 0.6, 0.7]);
+    expect(c.getX(hi)).toBeCloseTo(1.2, 3);
+    const r = shade(roundedBox(1, 1, 1, 0.1), { top: 1, bottom: 0, y0: 0, y1: 2 });
+    let max = 0;
+    for (let i = 0; i < r.attributes.color.count; i++) max = Math.max(max, r.attributes.color.getX(i));
+    expect(max).toBeCloseTo(0.5, 3);
+  });
+  it('v0.4: 색 있는 부품 + 없는 부품 같은 role 병합 (Review Focus 4), keepColor 재질', () => {
+    const style = getStyle('clay');
+    const built = buildByRole(style, [
+      { role: 'body', geo: shade(roundedBox(1, 1, 1), { top: 1, bottom: 0.5 }) },
+      { role: 'body', geo: place(roundedBox(1, 1, 1), 3, 0, 0) },
+    ]);
+    const mesh = built.group.getObjectByName('body') as THREE.Mesh;
+    const col = mesh.geometry.attributes.color;
+    expect(col).toBeTruthy();
+    const pos = mesh.geometry.attributes.position;
+    for (let i = 0; i < pos.count; i++) if (pos.getX(i) > 2) expect([col.getX(i), col.getY(i), col.getZ(i)]).toEqual([1, 1, 1]);
+    const mat = mesh.material as THREE.MeshStandardMaterial;
+    expect(mat.vertexColors).toBe(true);
+    expect('#' + mat.color.getHexString()).toBe(style.palette.body.toLowerCase());
+    built.dispose();
+  });
+  it('v0.4: 4 스타일 모두 keepColor면 팔레트 색 유지, 아니면 흰색', () => {
+    for (const n of ['stylized', 'minimal', 'clay', 'pastel'] as const) {
+      const s = getStyle(n);
+      const k = s.material('foliage', { vertexColors: true, keepColor: true }) as THREE.MeshStandardMaterial;
+      expect('#' + k.color.getHexString(), n).toBe(s.palette.foliage.toLowerCase());
+      const w = s.material('foliage', { vertexColors: true }) as THREE.MeshStandardMaterial;
+      expect(w.color.getHexString(), n).toBe('ffffff');
+    }
+  });
 });
+

@@ -40,7 +40,7 @@ export const minimal: Style = {
   sky: (p) => SKIES[p],
   material(role: Role, o: MaterialOpts = {}) {
     return new THREE.MeshStandardMaterial({
-      color: o.vertexColors ? '#ffffff' : PALETTE[role],
+      color: o.vertexColors && !o.keepColor ? '#ffffff' : PALETTE[role],
       roughness: 0.6,
       metalness: 0,
       vertexColors: !!o.vertexColors,

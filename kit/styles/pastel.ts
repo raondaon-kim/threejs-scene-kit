@@ -75,7 +75,7 @@ export const pastel: Style = {
   sky: (p) => SKIES[p],
   material(role: Role, o: MaterialOpts = {}) {
     return new THREE.MeshStandardMaterial({
-      color: o.vertexColors ? '#ffffff' : PALETTE[role],
+      color: o.vertexColors && !o.keepColor ? '#ffffff' : PALETTE[role],
       roughness: ROUGH[role] ?? 0.62,
       metalness: 0,
       vertexColors: !!o.vertexColors,

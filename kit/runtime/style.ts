@@ -15,6 +15,8 @@ export interface SkyColors {
 
 export interface MaterialOpts {
   vertexColors?: boolean;
+  /** vertexColors를 팔레트 색에 곱하는 배율로 쓴다 (기본은 흰색 바탕에 정점 색 그대로) */
+  keepColor?: boolean;
   transparent?: boolean;
   opacity?: number;
   side?: THREE.Side;

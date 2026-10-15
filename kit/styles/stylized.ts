@@ -51,7 +51,7 @@ export const stylized: Style = {
   sky: (p) => SKIES[p],
   material(role: Role, o: MaterialOpts = {}) {
     return new THREE.MeshToonMaterial({
-      color: o.vertexColors ? '#ffffff' : PALETTE[role],
+      color: o.vertexColors && !o.keepColor ? '#ffffff' : PALETTE[role],
       gradientMap: toonGradient(),
       vertexColors: !!o.vertexColors,
       transparent: !!o.transparent,

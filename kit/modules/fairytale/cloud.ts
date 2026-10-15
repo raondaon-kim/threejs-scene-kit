@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { blob, buildByRole, type Part } from '../../parts';
+import { blob, buildByRole, shade, type Part } from '../../parts';
 import { defineElement } from '../../runtime/element';
 import { num, seeded } from './common';
 
@@ -19,6 +19,15 @@ export const cloud = defineElement({
       g.translate(x, (rng() - 0.5) * S * 0.06, (rng() - 0.5) * S * 0.25);
       parts.push({ role: 'trim', geo: g });
     }
+    // 아래쪽은 살짝 라벤더 그늘
+    let y0 = Infinity;
+    let y1 = -Infinity;
+    for (const p of parts) {
+      p.geo.computeBoundingBox();
+      y0 = Math.min(y0, p.geo.boundingBox!.min.y);
+      y1 = Math.max(y1, p.geo.boundingBox!.max.y);
+    }
+    for (const p of parts) shade(p.geo, { top: 1, bottom: [0.86, 0.85, 0.95], y0, y1 });
     const built = buildByRole(ctx.style, parts);
     const group = new THREE.Group();
     group.add(built.group);
