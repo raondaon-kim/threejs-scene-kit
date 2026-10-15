@@ -4,12 +4,18 @@ import type { Style } from './style';
 
 export type Vec3 = [number, number, number];
 
-export type Role = 'ground' | 'foliage' | 'trunk' | 'water' | 'accent' | 'accent2' | 'accent3' | 'neutral' | 'label';
+export type Role =
+  | 'ground' | 'foliage' | 'trunk' | 'water' | 'accent' | 'accent2' | 'accent3' | 'neutral' | 'label'
+  | 'body' | 'bodyLight' | 'trim' | 'dark' | 'road' | 'cargo' | 'wood';
+export const ALL_ROLES: readonly Role[] = [
+  'ground', 'foliage', 'trunk', 'water', 'accent', 'accent2', 'accent3', 'neutral', 'label',
+  'body', 'bodyLight', 'trim', 'dark', 'road', 'cargo', 'wood',
+];
 /** 장면 요소(params.role)에 쓸 수 있는 역할 */
-export const ELEMENT_ROLES: readonly Role[] = ['accent', 'accent2', 'accent3', 'neutral', 'label'];
+export const ELEMENT_ROLES: readonly Role[] = ALL_ROLES;
 
-export type StyleName = 'stylized' | 'minimal';
-export const STYLE_NAMES: readonly StyleName[] = ['stylized', 'minimal'];
+export type StyleName = 'stylized' | 'minimal' | 'clay';
+export const STYLE_NAMES: readonly StyleName[] = ['stylized', 'minimal', 'clay'];
 
 export type SkyPreset = 'dawn' | 'day' | 'dusk' | 'night';
 export const SKY_PRESETS: readonly SkyPreset[] = ['dawn', 'day', 'dusk', 'night'];
@@ -24,6 +30,17 @@ export type TrackPath =
 export const TRACK_PATHS: readonly TrackPath[] = [
   'position.x', 'position.y', 'position.z', 'rotation.x', 'rotation.y', 'rotation.z', 'scale', 'opacity',
 ];
+
+/** 'param.<name>': 요소가 animatable로 선언한 파라미터 */
+export type TrackKey = TrackPath | `param.${string}`;
+
+export interface FollowDef {
+  /** [x, z] 점 목록 (2개 이상). centripetal Catmull-Rom, 호 길이 기준 진행 */
+  path: Array<[number, number]>;
+  t0: number;
+  t1: number;
+  ease?: EaseName;
+}
 
 export interface Cue {
   t: number;
@@ -40,15 +57,24 @@ export interface ElementDef {
   params?: Record<string, unknown>;
   enter?: Cue;
   exit?: Cue;
-  /** 값은 절대값: position/rotation(도)/scale은 덮어쓰기, opacity는 곱하기 */
-  tracks?: Partial<Record<TrackPath, Array<[number, number]>>>;
+  /** 값은 절대값: position/rotation(도)/scale은 덮어쓰기, opacity는 곱하기, param.*는 setParam */
+  tracks?: Partial<Record<TrackKey, Array<[number, number]>>>;
+  /** 경로 이동: x·z와 방향(yaw)을 덮어쓰고 이동 거리를 setParam('travel')로 전달 */
+  follow?: FollowDef;
 }
 
+/** size·sizeTo: ortho 카메라의 화면 세로 높이(m). 샷 안에서 같은 ease로 보간 */
+interface CameraCommon {
+  fov?: number;
+  size?: number;
+  sizeTo?: number;
+}
 export type CameraMove =
-  | { move: 'static'; pos: Vec3; target: Vec3; fov?: number }
-  | { move: 'dolly' | 'crane'; from: Vec3; to: Vec3; target: Vec3; targetTo?: Vec3; ease?: EaseName; fov?: number }
-  | { move: 'orbit'; center: Vec3; radius: number; height: number; fromDeg: number; toDeg: number; ease?: EaseName; fov?: number };
-export const CAMERA_MOVES = ['static', 'dolly', 'orbit', 'crane'] as const;
+  | ({ move: 'static'; pos: Vec3; target: Vec3 } & CameraCommon)
+  | ({ move: 'dolly' | 'crane'; from: Vec3; to: Vec3; target: Vec3; targetTo?: Vec3; ease?: EaseName } & CameraCommon)
+  | ({ move: 'orbit'; center: Vec3; radius: number; height: number; fromDeg: number; toDeg: number; ease?: EaseName } & CameraCommon)
+  | ({ move: 'path'; points: Vec3[]; target?: Vec3; targets?: Vec3[]; ease?: EaseName } & CameraCommon);
+export const CAMERA_MOVES = ['static', 'dolly', 'orbit', 'crane', 'path'] as const;
 
 export interface ShotDef {
   id: string;
@@ -62,6 +88,8 @@ export interface EnvironmentDef {
   terrain?: { size?: number; height?: number; roughness?: number; flatRadius?: number };
   trees?: { count?: number; area?: number; avoidCenter?: number };
   water?: { level?: number; size?: number };
+  /** 평평한 바닥판 (clay 장면용) */
+  ground?: { size?: number };
 }
 
 export interface SceneMeta {
@@ -70,6 +98,7 @@ export interface SceneMeta {
   fps: number;
   duration: number;
   seed: number;
+  projection?: 'perspective' | 'ortho';
 }
 
 export interface SceneDef {
@@ -89,6 +118,8 @@ export interface ElementHandle {
   update?(t: number): void;
   setProgress?(p: number): void;
   setOpacity?(o: number): void;
+  /** animatable 파라미터(예: lift, travel). 값만으로 상태가 결정되어야 한다 */
+  setParam?(name: string, value: number): void;
   dispose(): void;
 }
 
@@ -97,11 +128,13 @@ export interface KitContext {
   rng(salt: string): () => number;
   heightAt(x: number, z: number): number;
   quality: Quality;
-  camera: THREE.PerspectiveCamera;
+  camera: THREE.Camera;
 }
 
 export interface ElementType {
   type: string;
   supportsGrow?: boolean;
+  /** tracks의 'param.<name>'과 follow(travel)로 움직일 수 있는 파라미터 */
+  animatable?: string[];
   create(ctx: KitContext, params: Record<string, unknown>): ElementHandle;
 }

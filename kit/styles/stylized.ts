@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { FONT_STACK, type MaterialOpts, type SkyColors, type Style } from '../runtime/style';
+import { BASIC_LOOK, FONT_STACK, type MaterialOpts, type SkyColors, type Style } from '../runtime/style';
 import type { Role, SkyPreset } from '../runtime/types';
 
 const PALETTE: Record<Role, string> = {
@@ -11,6 +11,13 @@ const PALETTE: Record<Role, string> = {
   accent2: '#ffd166',
   accent3: '#5ec2b7',
   neutral: '#f2efe9',
+  body: '#e36f4f',
+  bodyLight: '#f4a582',
+  trim: '#fff8ec',
+  dark: '#3d3a4b',
+  road: '#c9b99a',
+  cargo: '#d7a86e',
+  wood: '#9c6b43',
   label: '#2b2d42',
 };
 
@@ -34,6 +41,7 @@ function toonGradient(): THREE.DataTexture {
 
 export const stylized: Style = {
   name: 'stylized',
+  look: BASIC_LOOK,
   palette: PALETTE,
   fogDensity: 0.012,
   labelFont: FONT_STACK,

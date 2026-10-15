@@ -20,8 +20,21 @@ export interface MaterialOpts {
   side?: THREE.Side;
 }
 
+/** 렌더 파이프라인 설정 (pipeline.ts가 사용) */
+export interface Look {
+  shadows: boolean;
+  ao: { intensity: number; radius: number } | null;
+  bloom: { strength: number; radius: number; threshold: number } | null;
+  toneMapping: 'none' | 'neutral';
+  /** RoomEnvironment IBL 세기. 0이면 끔 */
+  envIntensity: number;
+}
+
+export const BASIC_LOOK: Look = { shadows: true, ao: { intensity: 0.6, radius: 0.6 }, bloom: null, toneMapping: 'none', envIntensity: 0 };
+
 export interface Style {
   name: StyleName;
+  look: Look;
   palette: Record<Role, string>;
   fogDensity: number;
   /** CSS font-family 스택 (라벨용) */

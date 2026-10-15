@@ -7,6 +7,7 @@ export interface Issue {
 }
 export interface TypeInfo {
   supportsGrow: boolean;
+  animatable: string[];
 }
 
 type Err = (path: string, message: string) => void;
@@ -31,18 +32,21 @@ function knownKeys(err: Err, o: Obj, base: string, allowed: readonly string[]) {
 
 const KEYS = {
   root: ['meta', 'style', 'environment', 'elements', 'shots', 'custom'],
-  meta: ['width', 'height', 'fps', 'duration', 'seed'],
-  environment: ['sky', 'terrain', 'trees', 'water'],
+  meta: ['width', 'height', 'fps', 'duration', 'seed', 'projection'],
+  environment: ['sky', 'terrain', 'trees', 'water', 'ground'],
+  ground: ['size'],
   sky: ['preset'],
   terrain: ['size', 'height', 'roughness', 'flatRadius'],
   trees: ['count', 'area', 'avoidCenter'],
   water: ['level', 'size'],
-  element: ['id', 'type', 'at', 'rotation', 'scale', 'params', 'enter', 'exit', 'tracks'],
+  element: ['id', 'type', 'at', 'rotation', 'scale', 'params', 'enter', 'exit', 'tracks', 'follow'],
+  follow: ['path', 't0', 't1', 'ease'],
   cue: ['t', 'anim', 'dur'],
   shot: ['id', 'start', 'end', 'camera'],
-  static: ['move', 'pos', 'target', 'fov'],
-  dolly: ['move', 'from', 'to', 'target', 'targetTo', 'ease', 'fov'],
-  orbit: ['move', 'center', 'radius', 'height', 'fromDeg', 'toDeg', 'ease', 'fov'],
+  static: ['move', 'pos', 'target', 'fov', 'size', 'sizeTo'],
+  dolly: ['move', 'from', 'to', 'target', 'targetTo', 'ease', 'fov', 'size', 'sizeTo'],
+  orbit: ['move', 'center', 'radius', 'height', 'fromDeg', 'toDeg', 'ease', 'fov', 'size', 'sizeTo'],
+  path: ['move', 'points', 'target', 'targets', 'ease', 'fov', 'size', 'sizeTo'],
 } as const;
 
 function numIn(err: Err, o: Obj | undefined, base: string, key: string, min: number, max: number, integer = false) {
@@ -57,14 +61,14 @@ function validateEnvironment(env: unknown, err: Err) {
   if (env === undefined) return;
   if (!isObj(env)) return err('environment', '객체여야 함');
   knownKeys(err, env, 'environment', KEYS.environment);
-  for (const k of ['sky', 'terrain', 'trees', 'water'] as const) {
+  for (const k of ['sky', 'terrain', 'trees', 'water', 'ground'] as const) {
     if (isObj(env[k])) knownKeys(err, env[k], `environment.${k}`, KEYS[k]);
   }
   if (env.sky !== undefined) {
     if (!isObj(env.sky)) err('environment.sky', '객체여야 함');
     else if (env.sky.preset !== undefined) oneOf(err, 'environment.sky.preset', env.sky.preset, SKY_PRESETS);
   }
-  for (const k of ['terrain', 'trees', 'water'] as const) {
+  for (const k of ['terrain', 'trees', 'water', 'ground'] as const) {
     if (env[k] !== undefined && !isObj(env[k])) err(`environment.${k}`, '객체여야 함');
   }
   const t = isObj(env.terrain) ? env.terrain : undefined;
@@ -79,6 +83,8 @@ function validateEnvironment(env: unknown, err: Err) {
   const w = isObj(env.water) ? env.water : undefined;
   numIn(err, w, 'environment.water', 'level', -100, 100);
   numIn(err, w, 'environment.water', 'size', 10, 4000);
+  const gr = isObj(env.ground) ? env.ground : undefined;
+  numIn(err, gr, 'environment.ground', 'size', 10, 4000);
 }
 
 function validateElements(els: unknown, types: Map<string, TypeInfo>, duration: number, err: Err) {
@@ -118,13 +124,37 @@ function validateElements(els: unknown, types: Map<string, TypeInfo>, duration: 
     if (isObj(e.enter) && isObj(e.exit) && isNum(e.enter.t) && isNum(e.exit.t) && e.exit.t < e.enter.t) {
       err(`${p}.exit.t`, 'enter.t보다 앞설 수 없음');
     }
+    if (e.follow !== undefined) {
+      const fp = `${p}.follow`;
+      const f = e.follow;
+      if (!isObj(f)) err(fp, '객체여야 함');
+      else {
+        knownKeys(err, f, fp, KEYS.follow);
+        const okPath = Array.isArray(f.path) && f.path.length >= 2 &&
+          f.path.every((pt: unknown) => Array.isArray(pt) && pt.length === 2 && isNum(pt[0]) && isNum(pt[1]));
+        if (!okPath) err(`${fp}.path`, '[[x, z], ...] 점 2개 이상이어야 함');
+        if (!isNum(f.t0) || f.t0 < 0) err(`${fp}.t0`, '0 이상의 숫자여야 함');
+        if (!isNum(f.t1) || f.t1 > duration || (isNum(f.t0) && f.t1 <= f.t0)) err(`${fp}.t1`, `t0보다 크고 ${duration}초 이하여야 함`);
+        if (f.ease !== undefined) oneOf(err, `${fp}.ease`, f.ease, EASES);
+      }
+    }
     if (e.tracks !== undefined) {
       if (!isObj(e.tracks)) err(`${p}.tracks`, '객체여야 함');
       else {
         for (const [k, keys] of Object.entries(e.tracks)) {
           const tp = `${p}.tracks['${k}']`;
-          if (!TRACK_PATHS.includes(k as TrackPath)) {
-            err(tp, `알 수 없는 경로. 가능: ${list(TRACK_PATHS)}`);
+          if (k.startsWith('param.')) {
+            const name = k.slice(6);
+            const allowed = info?.animatable ?? [];
+            if (!allowed.includes(name)) {
+              err(tp, `'${e.type}'의 애니메이션 파라미터가 아님. 가능: ${allowed.length ? allowed.map((a) => `param.${a}`).join('|') : '(없음)'}`);
+              continue;
+            }
+          } else if (!TRACK_PATHS.includes(k as TrackPath)) {
+            err(tp, `알 수 없는 경로. 가능: ${list(TRACK_PATHS)}|param.<이름>`);
+            continue;
+          } else if (e.follow !== undefined && (k === 'position.x' || k === 'position.z')) {
+            err(tp, 'follow가 있으면 position.x/z 트랙을 쓸 수 없음 (follow가 x·z를 정함)');
             continue;
           }
           const okShape = Array.isArray(keys) && keys.length > 0 &&
@@ -162,6 +192,17 @@ function validateCamera(c: unknown, p: string, err: Err) {
       need('target', isVec3, VEC);
       if (c.targetTo !== undefined) need('targetTo', isVec3, VEC);
       break;
+    case 'path': {
+      const okPts = Array.isArray(c.points) && c.points.length >= 2 && c.points.every(isVec3);
+      if (!okPts) err(`${p}.points`, '[x, y, z] 점 2개 이상이어야 함');
+      if (c.targets !== undefined) {
+        const okT = Array.isArray(c.targets) && c.targets.every(isVec3) && Array.isArray(c.points) && c.targets.length === c.points.length;
+        if (!okT) err(`${p}.targets`, 'points와 같은 개수의 [x, y, z] 목록이어야 함');
+      } else if (!isVec3(c.target)) {
+        err(`${p}.target`, 'target([x, y, z]) 또는 targets가 필요함');
+      }
+      break;
+    }
     case 'orbit':
       need('center', isVec3, VEC);
       need('radius', (v) => isNum(v) && v > 0, '0보다 큰 숫자여야 함');
@@ -172,7 +213,10 @@ function validateCamera(c: unknown, p: string, err: Err) {
     default:
       return oneOf(err, `${p}.move`, c.move, CAMERA_MOVES);
   }
-  knownKeys(err, c, p, c.move === 'static' ? KEYS.static : c.move === 'orbit' ? KEYS.orbit : KEYS.dolly);
+  knownKeys(err, c, p, c.move === 'static' ? KEYS.static : c.move === 'orbit' ? KEYS.orbit : c.move === 'path' ? KEYS.path : KEYS.dolly);
+  for (const k of ['size', 'sizeTo'] as const) {
+    if (c[k] !== undefined && (!isNum(c[k]) || c[k] <= 0)) err(`${p}.${k}`, '0보다 큰 숫자여야 함 (ortho 화면 세로 높이, m)');
+  }
   if (c.ease !== undefined) oneOf(err, `${p}.ease`, c.ease, EASES);
   if (c.fov !== undefined && (!isNum(c.fov) || c.fov < 10 || c.fov > 120)) err(`${p}.fov`, '10 ~ 120 사이여야 함');
 }
@@ -227,6 +271,7 @@ export function validateScene(input: unknown, types: Map<string, TypeInfo>): Iss
       err('meta.width', '가로·세로는 짝수여야 함 (H.264 인코딩 조건)');
     }
     if (isNum(m.duration) && m.duration > 0) duration = m.duration;
+    if (m.projection !== undefined) oneOf(err, 'meta.projection', m.projection, ['perspective', 'ortho']);
   }
   oneOf(err, 'style', input.style, STYLE_NAMES);
   validateEnvironment(input.environment, err);

@@ -2,8 +2,8 @@ import { describe, it, expect } from 'vitest';
 import { validateScene, type TypeInfo } from '../../kit/runtime/validate';
 
 const types = new Map<string, TypeInfo>([
-  ['shape', { supportsGrow: false }],
-  ['arrow', { supportsGrow: true }],
+  ['shape', { supportsGrow: false, animatable: [] }],
+  ['arrow', { supportsGrow: true, animatable: [] }],
 ]);
 const cam = { move: 'static', pos: [0, 2, 10], target: [0, 0, 0] };
 const good = () => ({
@@ -107,5 +107,46 @@ describe('validateScene', () => {
     s.environment.trees = { count: 99999 };
     s.environment.terrain.roughness = 3;
     expect(paths(s)).toEqual(expect.arrayContaining(['environment.trees.count', 'environment.terrain.roughness']));
+  });
+});
+
+describe('v0.2 검증', () => {
+  const types2 = new Map<string, TypeInfo>([
+    ['shape', { supportsGrow: false, animatable: [] }],
+    ['forklift', { supportsGrow: false, animatable: ['lift', 'travel'] }],
+  ]);
+  const base = () => ({
+    meta: { width: 1920, height: 1080, fps: 30, duration: 10, seed: 1, projection: 'ortho' },
+    style: 'clay',
+    environment: { ground: { size: 300 } },
+    elements: [
+      { id: 'f', type: 'forklift', params: { role: 'body' }, tracks: { 'param.lift': [[1, 0], [2, 1]] },
+        follow: { path: [[0, 0], [10, 0], [10, 10]], t0: 0, t1: 5 } },
+    ],
+    shots: [
+      { id: 'a', start: 0, end: 5, camera: { move: 'static', pos: [20, 20, 20], target: [0, 0, 0], size: 30, sizeTo: 20 } },
+      { id: 'b', start: 5, end: 10, camera: { move: 'path', points: [[20, 20, 20], [0, 25, 30]], target: [0, 0, 0] } },
+    ],
+  });
+  it('정상 v0.2 장면', () => expect(validateScene(base(), types2)).toEqual([]));
+  it('param 트랙은 animatable만', () => {
+    const s = base() as any;
+    s.elements[0].tracks = { 'param.height': [[0, 1]] };
+    expect(validateScene(s, types2).map((i) => i.path)).toContain("elements[0].tracks['param.height']");
+  });
+  it('follow 형식과 position 트랙 충돌', () => {
+    const s = base() as any;
+    s.elements[0].follow = { path: [[0, 0]], t0: 3, t1: 2 };
+    s.elements[0].tracks = { 'position.x': [[0, 1]] };
+    const p = validateScene(s, types2).map((i) => i.path);
+    expect(p).toEqual(expect.arrayContaining(['elements[0].follow.path', 'elements[0].follow.t1', "elements[0].tracks['position.x']"]));
+  });
+  it('projection·size·path 카메라', () => {
+    const s = base() as any;
+    s.meta.projection = 'iso';
+    s.shots[0].camera.size = -1;
+    s.shots[1].camera = { move: 'path', points: [[0, 0, 0]] };
+    const p = validateScene(s, types2).map((i) => i.path);
+    expect(p).toEqual(expect.arrayContaining(['meta.projection', 'shots[0].camera.size', 'shots[1].camera.points', 'shots[1].camera.target']));
   });
 });

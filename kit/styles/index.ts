@@ -1,9 +1,10 @@
 import type { Style } from '../runtime/style';
 import type { StyleName } from '../runtime/types';
+import { clay } from './clay';
 import { minimal } from './minimal';
 import { stylized } from './stylized';
 
-const STYLES: Record<StyleName, Style> = { stylized, minimal };
+const STYLES: Record<StyleName, Style> = { stylized, minimal, clay };
 
 export function getStyle(name: StyleName): Style {
   const s = STYLES[name];

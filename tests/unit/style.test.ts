@@ -37,3 +37,14 @@ describe('styles', () => {
     expect(lights.some((l) => l instanceof THREE.DirectionalLight)).toBe(true);
   });
 });
+
+describe('v0.2 styles', () => {
+  it('clay 스타일: look과 새 역할', () => {
+    const s = getStyle('clay');
+    expect(s.look.ao).not.toBeNull();
+    expect(s.look.toneMapping).toBe('neutral');
+    for (const r of ['body', 'bodyLight', 'trim', 'dark', 'road', 'cargo', 'wood'] as const) expect(s.palette[r]).toMatch(/^#/);
+    expect(getStyle('stylized').palette.body).toMatch(/^#/);
+    expect(getStyle('minimal').look.toneMapping).toBe('none');
+  });
+});

@@ -22,5 +22,5 @@ export function elementRegistry(custom: ElementType[] = []): Map<string, Element
 }
 
 export function typeInfo(reg: Map<string, ElementType>): Map<string, TypeInfo> {
-  return new Map([...reg].map(([k, d]) => [k, { supportsGrow: !!d.supportsGrow }]));
+  return new Map([...reg].map(([k, d]) => [k, { supportsGrow: !!d.supportsGrow, animatable: d.animatable ?? [] }]));
 }

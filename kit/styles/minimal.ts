@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { FONT_STACK, type MaterialOpts, type SkyColors, type Style } from '../runtime/style';
+import { BASIC_LOOK, FONT_STACK, type MaterialOpts, type SkyColors, type Style } from '../runtime/style';
 import type { Role, SkyPreset } from '../runtime/types';
 
 const PALETTE: Record<Role, string> = {
@@ -11,6 +11,13 @@ const PALETTE: Record<Role, string> = {
   accent2: '#f2a541',
   accent3: '#16a085',
   neutral: '#ffffff',
+  body: '#2f6df6',
+  bodyLight: '#9cb8f7',
+  trim: '#ffffff',
+  dark: '#2a2d34',
+  road: '#d5d2cb',
+  cargo: '#cfa77a',
+  wood: '#a88a6a',
   label: '#1d1d1f',
 };
 
@@ -23,6 +30,7 @@ const SKIES: Record<SkyPreset, SkyColors> = {
 
 export const minimal: Style = {
   name: 'minimal',
+  look: BASIC_LOOK,
   palette: PALETTE,
   fogDensity: 0.008,
   labelFont: FONT_STACK,
