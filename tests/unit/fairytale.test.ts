@@ -14,8 +14,13 @@ import { cottage } from '../../kit/modules/fairytale/cottage';
 import { mushroom } from '../../kit/modules/fairytale/mushroom';
 import { windmill } from '../../kit/modules/fairytale/windmill';
 import { bridge } from '../../kit/modules/fairytale/bridge';
+import { fairytree } from '../../kit/modules/fairytale/fairytree';
+import { flowers } from '../../kit/modules/fairytale/flowers';
+import { field } from '../../kit/modules/fairytale/field';
+import { fence } from '../../kit/modules/fairytale/fence';
+import { cloud } from '../../kit/modules/fairytale/cloud';
 
-const BY: Record<string, ElementType> = { island, plateau, rock, river, waterfall, path, castle, cottage, mushroom, windmill, bridge };
+const BY: Record<string, ElementType> = { island, plateau, rock, river, waterfall, path, castle, cottage, mushroom, windmill, bridge, fairytree, flowers, field, fence, cloud };
 
 const ctx: KitContext = { style: getStyle('pastel'), rng: (s) => rngFor(7, s), heightAt: () => 0, quality: 'preview', camera: new THREE.PerspectiveCamera() };
 const verts = (o: THREE.Object3D) => {
@@ -128,5 +133,37 @@ describe('fairytale 건물', () => {
     const b = bbox(BY.bridge.create(ctx, { span: 7 }).object3d);
     expect(b.max.x - b.min.x).toBeGreaterThan(7);
     expect(b.max.z - b.min.z).toBeLessThan(4);
+  });
+});
+
+describe('fairytale 자연', () => {
+  it.each(['fairytree', 'flowers', 'field', 'cloud'])('%s: 기본 생성, 크기, dispose', (t) => {
+    const h = BY[t].create(ctx, {});
+    const b = bbox(h.object3d);
+    expect(b.getSize(new THREE.Vector3()).length()).toBeGreaterThan(0.5);
+    expect(verts(h.object3d).every(Number.isFinite)).toBe(true);
+    h.dispose();
+  });
+  it.each(['fairytree', 'flowers'])('%s: variant 결정성 (Review Focus 1)', (t) => {
+    expect(verts(BY[t].create(ctx, { variant: 3 }).object3d)).toEqual(verts(BY[t].create(ctx, { variant: 3 }).object3d));
+  });
+  it('fairytree kind conifer/puffy, 잘못된 kind 오류', () => {
+    expect(BY.fairytree.create(ctx, { kind: 'conifer' }).object3d.getObjectByName('foliage')).toBeTruthy();
+    expect(() => BY.fairytree.create(ctx, { kind: 'palm' })).toThrow(/kind/);
+  });
+  it('fence: 점 따라 기둥, 중복 점 유한, 점 1개 오류 (Review Focus 2)', () => {
+    const h = BY.fence.create(ctx, { points: [[0, 0], [0, 0], [6, 0]] });
+    expect(verts(h.object3d).every(Number.isFinite)).toBe(true);
+    expect(bbox(h.object3d).max.x).toBeGreaterThan(5.5);
+    expect(() => BY.fence.create(ctx, { points: [[0, 0]] })).toThrow(/points/);
+  });
+  it('cloud: userData.noShadow, update seek 무관', () => {
+    const h = BY.cloud.create(ctx, {});
+    expect(h.object3d.userData.noShadow).toBe(true);
+    h.update!(2);
+    const a = h.object3d.position.y;
+    h.update!(5);
+    h.update!(2);
+    expect(h.object3d.position.y).toBe(a);
   });
 });
