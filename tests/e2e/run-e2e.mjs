@@ -42,7 +42,7 @@ function meanDiff(a, b) {
 rmSync(join(PROJ, 'scene.ts'), { force: true });
 step('init', () => script('init.mjs', [PROJ, '--force']).project);
 step('npm install', () => {
-  if (existsSync(join(PROJ, 'node_modules', 'playwright'))) return 'cached';
+  if (existsSync(join(PROJ, 'node_modules', 'playwright')) && existsSync(join(PROJ, 'node_modules', 'p5'))) return 'cached';
   const r = spawnSync('npm', ['install', '--no-audit', '--no-fund'], { cwd: PROJ, shell: true, encoding: 'utf8', timeout: 900000 });
   if (r.status !== 0) throw new Error(r.stderr);
   return 'installed';
@@ -251,6 +251,21 @@ step('fairytale: still + golden', () => {
   const d = meanDiff(FT_GOLDEN, cur);
   if (d > 2) throw new Error(`fairytale 골든 대비 평균 차이 ${d.toFixed(3)} > 2`);
   return `meanDiff=${d.toFixed(3)}`;
+});
+
+// ── v0.4: p5 표면 질감 — 결정성·이어짐·견본 시트 (Review Focus 1) ──
+step('textures: 결정성·이어짐·swatch', () => {
+  const out = script('swatch.mjs', ['--project', PROJ, '--probe']);
+  if (statSync(out.file).size < 20000) throw new Error('견본 시트가 너무 작음');
+  const bad = [];
+  for (const [n, p] of Object.entries(out.probes)) {
+    if (!p.same) bad.push(`${n}: 같은 시드 다른 결과`);
+    if (!p.differs) bad.push(`${n}: 시드가 달라도 같음`);
+    // 가장자리 차이가 내부에서 가장 큰 인접 차이보다 크면 이음선 (무늬 경계가 있는 기와도 공정하게)
+    if (p.seamX > p.innerX + 8 || p.seamY > p.innerY + 8) bad.push(`${n}: 이음선 ${p.seamX.toFixed(1)}/${p.seamY.toFixed(1)} > 내부 ${p.innerX.toFixed(1)}/${p.innerY.toFixed(1)}`);
+  }
+  if (bad.length) throw new Error(bad.join('; '));
+  return `${out.textures.length}종, 이음/내부 최대 ${Object.entries(out.probes).map(([n, p]) => `${n} ${Math.max(p.seamX, p.seamY).toFixed(0)}/${Math.max(p.innerX, p.innerY).toFixed(0)}`).join(', ')}`;
 });
 
 console.log(failed ? `\n${failed} FAILED` : '\nALL PASSED');
