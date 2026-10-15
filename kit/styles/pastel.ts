@@ -8,7 +8,7 @@ const PALETTE: Record<Role, string> = {
   foliage: '#86bf6a',
   trunk: '#9a6b4f',
   water: '#8ed6f2',
-  rock: '#c9b9ae',
+  rock: '#d2b8a5',
   road: '#ead2a8',
   body: '#f6ead6',
   bodyLight: '#fbf3e6',

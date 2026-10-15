@@ -58,3 +58,12 @@ describe('grass (detail 키트)', () => {
     expect(() => grass.create(ctx, { avoid: [[[0, 0]], 5] })).toThrow(/avoid/);
   });
 });
+
+describe('grass role (06 compare 1라운드: 잎이 잔디보다 어두운 줄무늬로 보임)', () => {
+  it('기본 role은 ground(잔디 색과 같음), role 지정 가능, 잘못된 role 오류', () => {
+    const color = (o: THREE.Object3D) => ((inst(o).material as THREE.MeshStandardMaterial).color.getHexString());
+    expect(color(grass.create(ctx, { count: 10 }).object3d)).toBe(getStyle('pastel').palette.ground.slice(1));
+    expect(color(grass.create(ctx, { count: 10, role: 'foliage' }).object3d)).toBe(getStyle('pastel').palette.foliage.slice(1));
+    expect(() => grass.create(ctx, { role: 'lava' })).toThrow(/role/);
+  });
+});

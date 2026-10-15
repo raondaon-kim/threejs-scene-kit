@@ -3,6 +3,7 @@ import { distToPolyline, type XZ } from '../../layout';
 import { shade } from '../../parts';
 import { defineElement } from '../../runtime/element';
 import { num } from '../concept/params';
+import { ELEMENT_ROLES, type Role } from '../../runtime/types';
 
 const MAX = 20000;
 
@@ -31,12 +32,12 @@ function tuft(h: number): THREE.BufferGeometry {
   const g = new THREE.BufferGeometry();
   g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
   g.computeVertexNormals();
-  return shade(g, { top: 1.18, bottom: 0.62 });
+  return shade(g, { top: 1.12, bottom: 0.82 });
 }
 
 /**
  * 잔디: 풀포기를 원 안에 인스턴싱으로 흩뿌린다 (절대 좌표). 그림자를 드리우지 않는다.
- * center [0,0], radius 10, count 1500(최대 20000), height 0.35, avoid [[x,z]…][] (강·길), avoidWidth 2, variant 0
+ * center [0,0], radius 10, count 1500(최대 20000), height 0.35, avoid [[x,z]…][] (강·길), avoidWidth 2, role 'ground'(잔디와 같은 색), variant 0
  */
 export const grass = defineElement({
   type: 'grass',
@@ -55,9 +56,11 @@ export const grass = defineElement({
     const v = typeof params.variant === 'number' && Number.isFinite(params.variant) ? Math.round(params.variant) : 0;
     const rng = ctx.rng(`grass:${v}`);
     const geo = tuft(H);
-    const mat = ctx.style.material('foliage', { vertexColors: true, keepColor: true, side: THREE.DoubleSide });
+    const role = (params.role ?? 'ground') as Role;
+    if (!ELEMENT_ROLES.includes(role)) throw new Error(`grass.params.role '${String(params.role)}'은 알 수 없는 역할. 가능: ${ELEMENT_ROLES.join('|')}`);
+    const mat = ctx.style.material(role, { vertexColors: true, keepColor: true, side: THREE.DoubleSide });
     const mesh = new THREE.InstancedMesh(geo, mat, Math.max(1, count));
-    mesh.name = 'foliage';
+    mesh.name = role;
     const m = new THREE.Matrix4();
     const q = new THREE.Quaternion();
     const s = new THREE.Vector3();
