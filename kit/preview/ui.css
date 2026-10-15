@@ -1,0 +1,16 @@
+html, body { margin: 0; background: #16171d; color: #e8e8ea; font-family: system-ui, sans-serif; }
+.kit-stage { display: flex; justify-content: center; padding: 12px 0 0; }
+.kit-stage canvas { max-height: 72vh; max-width: 96vw; height: auto; box-shadow: 0 6px 30px rgba(0,0,0,.5); }
+.kit-capture .kit-stage { padding: 0; display: block; }
+.kit-capture .kit-stage canvas { max-height: none; max-width: none; box-shadow: none; display: block; }
+.kit-timeline { max-width: 900px; margin: 14px auto; padding: 0 16px; }
+.kit-track { position: relative; height: 34px; background: #24252d; border-radius: 6px; overflow: hidden; cursor: pointer; }
+.kit-shot { position: absolute; top: 0; bottom: 0; opacity: .55; font-size: 12px; padding: 2px 6px; box-sizing: border-box; color: #111; white-space: nowrap; overflow: hidden; border-right: 2px solid #16171d; }
+.kit-marker { position: absolute; bottom: 0; width: 2px; height: 12px; background: #fff; }
+.kit-exit { background: #ff6b6b; }
+.kit-head { position: absolute; top: 0; bottom: 0; width: 2px; background: #fff; box-shadow: 0 0 6px #fff; }
+.kit-controls { display: flex; gap: 10px; align-items: center; margin-top: 8px; }
+.kit-controls input { flex: 1; }
+.kit-controls button { background: #3a3c48; color: #fff; border: 0; border-radius: 4px; padding: 6px 12px; cursor: pointer; }
+.kit-readout { font-variant-numeric: tabular-nums; font-size: 13px; min-width: 260px; text-align: right; }
+.kit-errors { margin: 16px; padding: 12px; background: #3a1d22; color: #ffd7d7; border-radius: 6px; white-space: pre-wrap; }
