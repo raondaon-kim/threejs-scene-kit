@@ -3,7 +3,7 @@ import { cameraPose } from '../../kit/runtime/camera';
 
 describe('cameraPose', () => {
   it('static', () => {
-    expect(cameraPose({ move: 'static', pos: [1, 2, 3], target: [0, 0, 0] }, 0.7)).toEqual({ position: [1, 2, 3], target: [0, 0, 0], fov: 40 });
+    expect(cameraPose({ move: 'static', pos: [1, 2, 3], target: [0, 0, 0] }, 0.7)).toEqual({ position: [1, 2, 3], target: [0, 0, 0], fov: 40, size: 30 });
   });
   it('dolly는 시작·끝 위치', () => {
     const c = { move: 'dolly' as const, from: [0, 0, 10] as [number, number, number], to: [0, 0, 0] as [number, number, number], target: [0, 0, -5] as [number, number, number] };
@@ -20,5 +20,18 @@ describe('cameraPose', () => {
   });
   it('fov 지정', () => {
     expect(cameraPose({ move: 'static', pos: [0, 0, 1], target: [0, 0, 0], fov: 60 }, 0).fov).toBe(60);
+  });
+});
+
+describe('v0.2 camera', () => {
+  it('size/sizeTo 보간과 기본값', () => {
+    expect(cameraPose({ move: 'static', pos: [0, 0, 1], target: [0, 0, 0] }, 0).size).toBe(30);
+    expect(cameraPose({ move: 'static', pos: [0, 0, 1], target: [0, 0, 0], size: 40, sizeTo: 20 }, 1).size).toBeCloseTo(20);
+  });
+  it('path: 시작·끝 점과 타깃', () => {
+    const c = { move: 'path' as const, points: [[0, 10, 30], [30, 10, 0]] as [number, number, number][], target: [0, 0, 0] as [number, number, number], ease: 'linear' as const };
+    expect(cameraPose(c, 0).position[2]).toBeCloseTo(30);
+    expect(cameraPose(c, 1).position[0]).toBeCloseTo(30);
+    expect(cameraPose(c, 0.5).target).toEqual([0, 0, 0]);
   });
 });
