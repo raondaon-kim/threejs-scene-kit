@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { describe, it, expect } from 'vitest';
-import { warehouseAnchors } from '../../kit/anchors';
+import { lane, warehouseAnchors, type XZ } from '../../kit/anchors';
 import { dockPositions } from '../../kit/modules/logistics/warehouse';
 
 type V3 = [number, number, number];
@@ -62,5 +62,43 @@ describe('warehouseAnchors', () => {
     expect(() => warehouseAnchors({ width: NaN })).toThrow(/width/);
     expect(() => wh.truck(0, { length: Infinity })).toThrow(/length/);
     expect(() => warehouseAnchors({ at: [0, NaN, 0] as unknown as V3 })).toThrow(/at/);
+  });
+});
+
+describe('lane', () => {
+  it('직선: +X 진행의 오른쪽은 +Z', () => {
+    close(lane([[0, 0], [10, 0]], 1.6).flat(), [0, 1.6, 10, 1.6]);
+  });
+  it('90° 꺾임: 두 구간 모두에서 거리 유지 (미터 꼭짓점)', () => {
+    const r = lane([[0, 0], [10, 0], [10, 10]], 1);
+    close(r.flat(), [0, 1, 9, 1, 9, 10]);
+  });
+  it('음수 offset = 왼쪽', () => {
+    close(lane([[0, 0], [10, 0]], -2).flat(), [0, -2, 10, -2]);
+  });
+  it('reverse: 뒤집어 진행, 오른쪽은 반대편', () => {
+    close(lane([[0, 0], [10, 0]], 1.6, { reverse: true }).flat(), [10, -1.6, 0, -1.6]);
+  });
+  it('입력 배열을 바꾸지 않음 (Review Focus 3)', () => {
+    const pts: XZ[] = [[0, 0], [10, 0], [10, 10]];
+    const copy = JSON.stringify(pts);
+    lane(pts, 1, { reverse: true });
+    lane(pts, -1);
+    expect(JSON.stringify(pts)).toBe(copy);
+  });
+  it('U턴(180°)에서도 NaN 없음 (Review Focus 1)', () => {
+    const r = lane([[0, 0], [10, 0], [0, 0.0001]], 1);
+    expect(r.flat().every(Number.isFinite)).toBe(true);
+    close(r[1], [10, 1], 3);
+  });
+  it('예각은 배율 상한 2', () => {
+    const r = lane([[0, 0], [10, 0], [0, 1]], 1);
+    expect(Math.hypot(r[1][0] - 10, r[1][1])).toBeLessThanOrEqual(2 + 1e-9);
+  });
+  it('연속 중복점 제거, 서로 다른 점 2개 미만이면 오류', () => {
+    expect(lane([[0, 0], [0, 0], [10, 0]], 1)).toHaveLength(2);
+    expect(() => lane([[1, 1], [1, 1]], 1)).toThrow(/2개/);
+    expect(() => lane([[0, 0], [NaN, 1]], 1)).toThrow(/숫자/);
+    expect(() => lane([[0, 0], [1, 0]], NaN)).toThrow(/offset/);
   });
 });

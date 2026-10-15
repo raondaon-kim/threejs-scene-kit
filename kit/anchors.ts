@@ -67,3 +67,46 @@ export function warehouseAnchors(o: WarehouseAnchorOpts = {}) {
     },
   };
 }
+
+/**
+ * 도로 중심선 points를 진행 방향 오른쪽으로 offset(m)만큼 평행 이동한 경로 (음수 = 왼쪽).
+ * 꺾이는 점은 이등분 법선으로 밀고 배율은 최대 2. U턴은 앞 구간 법선을 쓴다. 입력은 바꾸지 않는다.
+ */
+export function lane(points: XZ[], offset: number, opts: { reverse?: boolean } = {}): XZ[] {
+  if (typeof offset !== 'number' || !Number.isFinite(offset)) throw new Error('lane: offset은 유한한 숫자여야 함');
+  const src = opts.reverse ? [...points].reverse() : points;
+  const pts: XZ[] = [];
+  for (const p of src) {
+    if (!Array.isArray(p) || p.length !== 2 || !p.every((v) => typeof v === 'number' && Number.isFinite(v))) {
+      throw new Error('lane: 점은 [x, z] 유한한 숫자 쌍이어야 함');
+    }
+    const last = pts[pts.length - 1];
+    if (!last || Math.hypot(p[0] - last[0], p[1] - last[1]) > 1e-9) pts.push([p[0], p[1]]);
+  }
+  if (pts.length < 2) throw new Error('lane: 서로 다른 점이 2개 이상 필요함');
+  const right = (a: XZ, b: XZ): XZ => {
+    const dx = b[0] - a[0];
+    const dz = b[1] - a[1];
+    const l = Math.hypot(dx, dz);
+    return [-dz / l, dx / l];
+  };
+  return pts.map((p, i): XZ => {
+    let n: XZ;
+    let k = 1;
+    if (i === 0) n = right(pts[0], pts[1]);
+    else if (i === pts.length - 1) n = right(pts[i - 1], p);
+    else {
+      const n1 = right(pts[i - 1], p);
+      const n2 = right(p, pts[i + 1]);
+      const sx = n1[0] + n2[0];
+      const sz = n1[1] + n2[1];
+      const l = Math.hypot(sx, sz);
+      if (l < 1e-3) n = n1; // U턴(거의 180°): 이등분 법선이 불안정하므로 앞 구간 법선
+      else {
+        n = [sx / l, sz / l];
+        k = Math.min(2, 1 / Math.max(1e-6, n[0] * n1[0] + n[1] * n1[1]));
+      }
+    }
+    return [p[0] + n[0] * offset * k, p[1] + n[1] * offset * k];
+  });
+}
