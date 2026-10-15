@@ -8,6 +8,7 @@ allowed-tools:
   - Bash(node "${CLAUDE_PLUGIN_ROOT}/scripts/still.mjs" *)
   - Bash(node "${CLAUDE_PLUGIN_ROOT}/scripts/render.mjs" *)
   - Bash(node "${CLAUDE_PLUGIN_ROOT}/scripts/update.mjs" *)
+  - Bash(node "${CLAUDE_PLUGIN_ROOT}/scripts/swatch.mjs" *)
 ---
 
 # 장면 연출 (scene-direct)
@@ -41,6 +42,7 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/render.mjs" --project <폴더>              
 node "${CLAUDE_PLUGIN_ROOT}/scripts/render.mjs" --project <폴더> --quality final    # final → out/video.mp4
 ```
 
+- 표면 질감·배경 견본: `swatch.mjs --project <폴더>` → `out/swatch.png` (look.surfaces·background 고를 때)
 - 스토리보드 한 샷만 다시: `storyboard.mjs --project <폴더> --shot s2` (storyboard.json의 prompt를 고친 뒤)
 - 특정 시점 스틸: `still.mjs --project <폴더> --at 1,4,8 --sheet`
 - 미리보기 UI: `npm --prefix <폴더> run dev` (타임라인 스크럽·샷 구간·재생)

@@ -42,7 +42,7 @@ function meanDiff(a, b) {
 rmSync(join(PROJ, 'scene.ts'), { force: true });
 step('init', () => script('init.mjs', [PROJ, '--force']).project);
 step('npm install', () => {
-  if (existsSync(join(PROJ, 'node_modules', 'playwright'))) return 'cached';
+  if (existsSync(join(PROJ, 'node_modules', 'playwright')) && existsSync(join(PROJ, 'node_modules', 'p5'))) return 'cached';
   const r = spawnSync('npm', ['install', '--no-audit', '--no-fund'], { cwd: PROJ, shell: true, encoding: 'utf8', timeout: 900000 });
   if (r.status !== 0) throw new Error(r.stderr);
   return 'installed';
@@ -217,9 +217,10 @@ const RIVER: XZ[] = [[0, -8], [-1, 0], [1, 8], [FALL.at[0], FALL.at[2]]];
 export default defineScene({
   meta: { width: 1920, height: 1080, fps: 30, duration: 4, seed: 4 },
   style: 'pastel',
-  environment: { sky: { preset: 'day' } },
+  environment: { sky: { preset: 'day' }, background: { kind: 'meshGradient', preset: 'sunset', sun: true } },
   elements: [
     { id: 'island', type: 'island', params: { radius: 16, depth: 12, floaters: 4 } },
+    { id: 'grass', type: 'grass', params: { radius: 15, count: 3000, avoid: [RIVER], avoidWidth: 3.6 } },
     { id: 'plateau', type: 'plateau', at: [0, 0, -10], params: { radius: 5, height: 4 } },
     { id: 'castle', type: 'castle', at: [0, 4, -11], params: { size: 7 } },
     { id: 'river', type: 'river', params: { points: RIVER, width: 2.4 } },
@@ -251,6 +252,22 @@ step('fairytale: still + golden', () => {
   const d = meanDiff(FT_GOLDEN, cur);
   if (d > 2) throw new Error(`fairytale 골든 대비 평균 차이 ${d.toFixed(3)} > 2`);
   return `meanDiff=${d.toFixed(3)}`;
+});
+
+// ── v0.4: p5 표면 질감 — 결정성·이어짐·견본 시트 (Review Focus 1) ──
+step('textures: 결정성·이어짐·swatch', () => {
+  const out = script('swatch.mjs', ['--project', PROJ, '--probe']);
+  if (statSync(out.file).size < 20000) throw new Error('견본 시트가 너무 작음');
+  const bad = [];
+  for (const [n, p] of Object.entries(out.probes)) {
+    if (!p.same) bad.push(`${n}: 같은 시드 다른 결과`);
+    if (!p.differs) bad.push(`${n}: 시드가 달라도 같음`);
+    // 가장자리 차이가 내부 인접 차이 99백분위의 1.5배(+2)를 넘으면 이음선 (기와처럼 주기적 경계는 백분위에 포함됨)
+    const lim = (q) => Math.max(q * 1.5, q + 2);
+    if (p.seamX > lim(p.innerX) || p.seamY > lim(p.innerY)) bad.push(`${n}: 이음선 ${p.seamX.toFixed(1)}/${p.seamY.toFixed(1)} > 내부 ${p.innerX.toFixed(1)}/${p.innerY.toFixed(1)}`);
+  }
+  if (bad.length) throw new Error(bad.join('; '));
+  return `${out.textures.length}종, 이음/내부 최대 ${Object.entries(out.probes).map(([n, p]) => `${n} ${Math.max(p.seamX, p.seamY).toFixed(0)}/${Math.max(p.innerX, p.innerY).toFixed(0)}`).join(', ')}`;
 });
 
 console.log(failed ? `\n${failed} FAILED` : '\nALL PASSED');

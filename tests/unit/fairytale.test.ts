@@ -224,3 +224,25 @@ describe('최종 리뷰 반영', () => {
     }
   });
 });
+
+describe('v0.4 정점 색 음영', () => {
+  const colorsOf = (o: THREE.Object3D, role: string) => {
+    const m = o.getObjectByName(role) as THREE.Mesh;
+    const c = m.geometry.attributes.color;
+    return c ? Array.from(c.array as Float32Array) : null;
+  };
+  it('fairytree·rock·cloud에 color 속성', () => {
+    expect(colorsOf(BY.fairytree.create(ctx, {}).object3d, 'foliage')).not.toBeNull();
+    expect(colorsOf(BY.rock.create(ctx, {}).object3d, 'rock')).not.toBeNull();
+    expect(colorsOf(BY.cloud.create(ctx, {}).object3d, 'trim')).not.toBeNull();
+  });
+  it('fairytree tint: 같은 variant 같은 색, 다른 variant 다른 색, tint 0이면 음영만', () => {
+    const a = colorsOf(BY.fairytree.create(ctx, { variant: 1 }).object3d, 'foliage')!;
+    const b = colorsOf(BY.fairytree.create(ctx, { variant: 1 }).object3d, 'foliage')!;
+    const c = colorsOf(BY.fairytree.create(ctx, { variant: 2 }).object3d, 'foliage')!;
+    expect(a).toEqual(b);
+    expect(a).not.toEqual(c);
+    const g = colorsOf(BY.fairytree.create(ctx, { variant: 1, tint: 0 }).object3d, 'foliage')!;
+    expect(g.every((v, i) => i % 3 !== 0 || Math.abs(v - g[i + 1]) < 1e-6)).toBe(true);
+  });
+});

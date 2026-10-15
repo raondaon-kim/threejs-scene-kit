@@ -63,7 +63,7 @@ describe('skills', () => {
     expect(lg).toContain('width: WH.width, depth: WH.depth, docks: WH.docks');
     const sb = readFileSync(join(ROOT, 'skills', 'scene-direct', 'references', 'storyboard.md'), 'utf8');
     expect(sb).toMatch(/물류.*장면 전용|개념.*free/);
-    expect(JSON.parse(readFileSync(join(ROOT, '.claude-plugin', 'plugin.json'), 'utf8')).version).toBe('0.3.0');
+    expect(JSON.parse(readFileSync(join(ROOT, '.claude-plugin', 'plugin.json'), 'utf8')).version).toBe('0.4.0');
   });
   it('최종 리뷰: 키트 추가 안내에 registry 연결, concept는 style의 no text 제거 안내', () => {
     expect(readFileSync(join(ROOT, 'README.md'), 'utf8')).toMatch(/vocab\.json.*registry\.ts.*BUILTIN_ELEMENTS/);
@@ -97,4 +97,23 @@ describe('skills', () => {
     expect(schema).toContain('pastel');
     expect(readFileSync(join(ROOT, 'scripts', 'init.mjs'), 'utf8')).toMatch(/stylized\|minimal\|clay\|pastel/);
   });
+  it('v0.4: 질감·배경·디테일 문서', () => {
+    const tx = readFileSync(join(ROOT, 'skills', 'scene-modules', 'references', 'textures.md'), 'utf8');
+    for (const k of ['grass-brush', 'rock-grain', 'roof-tiles', 'soil-pebbles', 'water-ripple', 'wood-grain', 'paper', 'look', 'surfaces', 'meshGradient', 'swatch.mjs']) expect(tx, k).toContain(k);
+    const mods = readFileSync(join(ROOT, 'skills', 'scene-modules', 'SKILL.md'), 'utf8');
+    for (const k of ['grass', 'scatter', 'textures.md', 'kit/layout']) expect(mods, k).toContain(k);
+    const schema = readFileSync(join(ROOT, 'skills', 'scene-direct', 'references', 'scene-schema.md'), 'utf8');
+    for (const k of ['look', 'background', 'customTextures']) expect(schema, k).toContain(k);
+    const direct = readFileSync(join(ROOT, 'skills', 'scene-direct', 'SKILL.md'), 'utf8');
+    expect(direct).toContain('swatch.mjs');
+    const custom = readFileSync(join(ROOT, 'skills', 'scene-custom', 'SKILL.md'), 'utf8');
+    for (const k of ['defineTexture', 'customTextures', 'randomSeed', 'frameCount']) expect(custom, k).toContain(k);
+  });
+  it('최종 리뷰 I-4: grass·scatter·tint 문서 (kit 소스를 읽지 않아도 되게)', () => {
+    const d = readFileSync(join(ROOT, 'skills', 'scene-modules', 'references', 'detail.md'), 'utf8');
+    for (const k of ['center', 'radius', 'count', 'height', 'avoid', 'avoidWidth', 'role', 'variant', '20000', '절대 좌표', 'idPrefix', 'rotate', 'minDist', 'seed']) expect(d, k).toContain(k);
+    expect(readFileSync(join(ROOT, 'skills', 'scene-modules', 'SKILL.md'), 'utf8')).toContain('references/detail.md');
+    expect(readFileSync(join(ROOT, 'skills', 'scene-modules', 'references', 'fairytale.md'), 'utf8')).toContain('tint');
+  });
 });
+

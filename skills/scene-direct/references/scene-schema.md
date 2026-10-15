@@ -2,7 +2,7 @@
 
 ```ts
 import { defineScene } from './kit/runtime/scene';
-export default defineScene({ meta, style, environment?, elements?, shots, custom? });
+export default defineScene({ meta, style, environment?, elements?, shots, custom?, look?, customTextures? });
 ```
 
 ## 시간 모델
@@ -95,3 +95,17 @@ orbit 각도 0도는 +z 방향(정면), 90도는 +x 방향.
 ## custom (선택)
 
 `defineElement`로 만든 요소 정의 배열. scene-custom 스킬 참고.
+
+## look (선택)
+
+표면 질감(p5.js)·세기. `look: { surfaces: { <role>: '<텍스처>' | { texture, tile?, strength?, flow? } | 'none' }, strength?: 0~1 }`.
+내장 텍스처·예시: scene-modules `references/textures.md`. 견본: `swatch.mjs`.
+
+## environment.background (선택)
+
+`{ kind: 'meshGradient', preset?: 'dawn'|'day'|'dusk'|'sunset', colors?: ['#rrggbb', …2~6], sun?: boolean, seed?: 정수 }` — 화면 배경 메쉬 그라디언트(구형 하늘 대신).
+
+## customTextures (선택)
+
+`defineTexture`로 만든 p5 텍스처 배열. scene-custom 스킬의 "커스텀 텍스처" 참고.
+

@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { blob, buildByRole, type Part } from '../../parts';
+import { blob, buildByRole, shade, type Part } from '../../parts';
 import type { KitContext, Role } from '../../runtime/types';
 
 export { num } from '../concept/params';
@@ -70,6 +70,7 @@ export function rockRing(parts: Part[], rng: () => number, r: number, y0: number
         g.translate(0, minY, 0);
       } else g.translate(0, maxTop - maxY, 0);
     }
+    if (role === 'rock') shade(g, { top: 1.05, bottom: 0.72 });
     parts.push({ role, geo: g });
   }
 }

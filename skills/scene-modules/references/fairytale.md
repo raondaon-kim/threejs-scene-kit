@@ -29,7 +29,7 @@
 
 | type | params (기본) | 설명 |
 |---|---|---|
-| fairytree | kind 'puffy'\|'conifer', height 3.5, variant | 몽글한 나무 / 침엽수 |
+| fairytree | kind 'puffy'\|'conifer', height 3.5, tint 0.06, variant | 몽글한 나무 / 침엽수. 수관은 위가 밝은 음영, tint(0~0.5)만큼 나무마다 색이 조금씩 다름 |
 | flowers | radius 1.5, count 24, variant | 꽃밭 |
 | field | width 6, depth 4, rows 5 | 밀밭 |
 | fence | points (절대) | 나무 울타리 (점을 직선으로 이음) |

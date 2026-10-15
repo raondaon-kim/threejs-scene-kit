@@ -1,6 +1,7 @@
 import type * as THREE from 'three';
 import type { EaseName } from './easing';
 import type { Style } from './style';
+import type { BackgroundSpec, TextureDef } from '../textures/types';
 
 export type Vec3 = [number, number, number];
 
@@ -92,6 +93,8 @@ export interface EnvironmentDef {
   water?: { level?: number; size?: number };
   /** 평평한 바닥판 (clay 장면용) */
   ground?: { size?: number };
+  /** 화면 배경 (메쉬 그라디언트). 있으면 구형 하늘 대신 */
+  background?: BackgroundSpec;
 }
 
 export interface SceneMeta {
@@ -103,6 +106,24 @@ export interface SceneMeta {
   projection?: 'perspective' | 'ortho';
 }
 
+/** 표면 질감 지정: 텍스처 이름 | 상세 | 'none'(끔) */
+export interface SurfaceSpec {
+  texture: string;
+  /** 한 장이 덮는 길이(m). 없으면 텍스처 기본값 */
+  tile?: number;
+  /** 0~1 */
+  strength?: number;
+  /** 흐름 속도 [x, z] m/s (윗면 투영에만) */
+  flow?: [number, number];
+}
+export type SurfaceRef = string | SurfaceSpec;
+
+/** 장면 단위 룩 조정 (스타일 기본값을 덮어씀) */
+export interface LookDef {
+  surfaces?: Partial<Record<Role, SurfaceRef>>;
+  strength?: number;
+}
+
 export interface SceneDef {
   meta: SceneMeta;
   style: StyleName;
@@ -110,6 +131,9 @@ export interface SceneDef {
   elements?: ElementDef[];
   shots: ShotDef[];
   custom?: ElementType[];
+  look?: LookDef;
+  /** 프로젝트 custom/textures의 defineTexture 결과 */
+  customTextures?: TextureDef[];
 }
 
 export type Quality = 'preview' | 'final';

@@ -5,6 +5,7 @@ export default defineConfig({
   optimizeDeps: {
     noDiscovery: true,
     include: [
+      'p5',
       'three',
       'three/addons/geometries/RoundedBoxGeometry.js',
       'three/addons/utils/BufferGeometryUtils.js',

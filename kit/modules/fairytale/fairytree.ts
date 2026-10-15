@@ -1,8 +1,11 @@
-import { blob, buildByRole, cone, cyl, place, type Part } from '../../parts';
+import { blob, buildByRole, cone, cyl, place, shade, tintColors, type Part } from '../../parts';
 import { defineElement } from '../../runtime/element';
 import { num, pick, seeded } from './common';
 
-/** 동화 나무: puffy(몽글한 덩어리 수관) | conifer(원뿔 3단). height 3.5, variant 0 */
+/**
+ * 동화 나무: puffy(몽글한 덩어리 수관) | conifer(원뿔 3단). height 3.5, variant 0.
+ * 수관은 위가 밝고 아래가 어두운 정점 색 음영 + tint(기본 0.06)만큼 나무마다 색이 조금씩 다르다.
+ */
 export const fairytree = defineElement({
   type: 'fairytree',
   create(ctx, params) {
@@ -35,6 +38,18 @@ export const fairytree = defineElement({
         parts.push({ role: 'foliage', geo: place(cone(r, H * 0.42), 0, H * (0.16 + f * 0.24), 0) });
       }
     }
+    // 수관 전체 높이 범위로 음영 (위 밝게, 아래 어둡게) + 나무마다 색 흔들림
+    const crown = parts.filter((p) => p.role === 'foliage');
+    let y0 = Infinity;
+    let y1 = -Infinity;
+    for (const c of crown) {
+      c.geo.computeBoundingBox();
+      y0 = Math.min(y0, c.geo.boundingBox!.min.y);
+      y1 = Math.max(y1, c.geo.boundingBox!.max.y);
+    }
+    const tint = Math.max(0, Math.min(0.5, num(params.tint, 0.06)));
+    const m: [number, number, number] = [1 + (rng() * 2 - 1) * tint, 1 + (rng() * 2 - 1) * tint * 0.6, 1 + (rng() * 2 - 1) * tint];
+    for (const c of crown) tintColors(shade(c.geo, { top: 1.12, bottom: 0.78, y0, y1 }), m);
     const built = buildByRole(ctx.style, parts);
     return { object3d: built.group, dispose: built.dispose };
   },

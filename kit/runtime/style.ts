@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import type { Role, SkyPreset, StyleName, Vec3 } from './types';
+import type { Role, SurfaceRef, SkyPreset, StyleName, Vec3 } from './types';
 
 export interface SkyColors {
   top: string;
@@ -15,6 +15,8 @@ export interface SkyColors {
 
 export interface MaterialOpts {
   vertexColors?: boolean;
+  /** vertexColors를 팔레트 색에 곱하는 배율로 쓴다 (기본은 흰색 바탕에 정점 색 그대로) */
+  keepColor?: boolean;
   transparent?: boolean;
   opacity?: number;
   side?: THREE.Side;
@@ -42,6 +44,10 @@ export interface Style {
   sky(preset: SkyPreset): SkyColors;
   /** 호출마다 새 인스턴스. 호출자가 dispose 책임. */
   material(role: Role, opts?: MaterialOpts): THREE.Material;
+  /** 역할별 기본 표면 질감 (없으면 질감 없음) */
+  surfaces?: Partial<Record<Role, SurfaceRef>>;
+  /** 질감 기본 세기 0~1 */
+  surfaceStrength?: number;
 }
 
 export const FONT_STACK = '"Malgun Gothic", "Apple SD Gothic Neo", "Noto Sans KR", "Noto Sans CJK KR", sans-serif';
