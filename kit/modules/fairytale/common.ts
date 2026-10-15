@@ -46,7 +46,8 @@ export function slab(ol: XZ[], t: number, top: number, bevel = 0.35): THREE.Buff
 }
 
 /** 반지름 r 원 둘레에 바위 덩어리 한 바퀴 (바닥 y0). size는 덩어리 지름 */
-export function rockRing(parts: Part[], rng: () => number, r: number, y0: number, size: number, role: Role = 'rock'): void {
+/** maxTop: 덩어리 꼭대기 상한(잔디 윗면 아래). 넘으면 바닥 기준으로 납작하게 줄이고, 너무 낮으면 아래로 내린다 */
+export function rockRing(parts: Part[], rng: () => number, r: number, y0: number, size: number, role: Role = 'rock', maxTop = Infinity): void {
   const n = Math.max(6, Math.round((Math.PI * 2 * r) / (size * 0.85)));
   const p0 = rng() * Math.PI * 2;
   for (let i = 0; i < n; i++) {
@@ -56,6 +57,19 @@ export function rockRing(parts: Part[], rng: () => number, r: number, y0: number
     const g = blob(s / 2, rng, 0.2, 1);
     g.scale(1, 0.85 + rng() * 0.3, 1);
     g.translate(Math.cos(a) * rr, y0 + (rng() - 0.5) * size * 0.2, Math.sin(a) * rr);
+    g.computeBoundingBox();
+    // translate/scale이 boundingBox를 다시 계산하므로 값을 먼저 꺼내 둔다
+    const minY = g.boundingBox!.min.y;
+    const maxY = g.boundingBox!.max.y;
+    if (maxY > maxTop) {
+      const h = maxY - minY;
+      const room = maxTop - minY;
+      if (room > h * 0.35) {
+        g.translate(0, -minY, 0);
+        g.scale(1, room / h, 1);
+        g.translate(0, minY, 0);
+      } else g.translate(0, maxTop - maxY, 0);
+    }
     parts.push({ role, geo: g });
   }
 }

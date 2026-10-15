@@ -47,7 +47,8 @@ description: threejs-scene-kit 장면에 넣을 수 있는 요소와 환경의 �
 | fence | 울타리 (절대 좌표) | points | – |
 | cloud | 구름(그림자 없음) | size | 위아래 |
 
-- 다리 배치는 `bridgeOn(RIVER, i)` (kit/anchors). 상세·구도: `references/fairytale.md`
+- 다리 배치는 `bridgeOn(RIVER, i)`, 폭포는 `islandEdge(radius, 각도)` (kit/anchors). 상세·구도: `references/fairytale.md`
+- 같은 type·같은 variant는 같은 모양. 나무·꽃·바위·버섯·구름·섬·높은 단을 여러 개 놓을 땐 `variant: i`로 다르게.
 
 ## 개념 요소
 

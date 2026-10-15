@@ -130,3 +130,19 @@ export function bridgeOn(points: XZ[], i: number): Placement {
   const yaw = (Math.atan2(-tx, -tz) * 180) / Math.PI;
   return { at: [px, 0, pz], rotation: [0, yaw, 0] };
 }
+
+/**
+ * 섬 가장자리 바깥 지점(폭포 등): island(radius R)의 절벽 바위·잔디 외곽보다 바깥, y=0, 바깥을 향하는 rotation.
+ * angleDeg: 섬 중심에서 본 방향(0 = +X, 90 = +Z 카메라 정면 쪽). 폭포·강 끝점을 여기에 둔다.
+ */
+export function islandEdge(radius: number, angleDeg: number): Placement {
+  if (typeof radius !== 'number' || !Number.isFinite(radius) || radius <= 0) throw new Error('islandEdge: radius는 양의 유한한 숫자');
+  if (typeof angleDeg !== 'number' || !Number.isFinite(angleDeg)) throw new Error('islandEdge: angleDeg는 유한한 숫자');
+  const R = Math.max(4, radius);
+  const size = Math.max(1.4, (4.2 * R) / 30); // island 절벽 위층 덩어리 크기와 같은 식
+  const d = Math.max(R * 1.06 + 0.3, R * 0.995 + size * 0.9, R * 0.985 + 1.1 * (R / 30) + 0.2) + 0.4;
+  const a = (angleDeg * Math.PI) / 180;
+  const yaw = (Math.atan2(Math.cos(a), Math.sin(a)) * 180) / Math.PI;
+  return { at: [Math.cos(a) * d, 0, Math.sin(a) * d], rotation: [0, yaw, 0] };
+}
+

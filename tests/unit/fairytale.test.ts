@@ -188,3 +188,39 @@ describe('fairytale 리본 면 방향 (벤치마크 1라운드: 강·길이 어�
     expect(checked).toBeGreaterThan(0);
   });
 });
+
+describe('최종 리뷰 반영', () => {
+  const rockTop = (o: THREE.Object3D) => {
+    let top = -Infinity;
+    o.updateMatrixWorld(true);
+    o.traverse((m) => {
+      const mesh = m as THREE.Mesh;
+      if (!mesh.isMesh || mesh.name !== 'rock') return;
+      const p = mesh.geometry.attributes.position;
+      for (let i = 0; i < p.count; i++) top = Math.max(top, p.getY(i));
+    });
+    return top;
+  };
+  it.each([[9, 1], [9, 1.5], [9, 5], [5, 12]])('I2: plateau r%s h%s 바위가 윗면(height) 위로 나오지 않음', (r, h) => {
+    expect(rockTop(BY.plateau.create(ctx, { radius: r, height: h }).object3d)).toBeLessThanOrEqual(h);
+  });
+  it.each([16, 30, 60])('I2: island R%s 절벽 바위가 잔디 윗면(0) 위로 나오지 않음', (R) => {
+    const o = BY.island.create(ctx, { radius: R, depth: 12 }).object3d;
+    const floaters = o.getObjectByName('floaters')!;
+    floaters.removeFromParent();
+    expect(rockTop(o)).toBeLessThanOrEqual(0.02);
+  });
+  it.each([7, 14, 20, 30])('I3: bridge span %s 윗면이 아치 위에 있음 (형상 자기교차 없음)', (span) => {
+    const o = BY.bridge.create(ctx, { span }).object3d;
+    const mesh = o.getObjectByName('neutral') as THREE.Mesh;
+    const p = mesh.geometry.attributes.position;
+    const rise = span * 0.26;
+    for (const fx of [-0.4, -0.25, 0.25, 0.4]) {
+      const x = fx * span;
+      const arch = Math.sin(Math.acos(Math.min(1, Math.abs(x) / (span / 2)))) * rise;
+      let top = -Infinity;
+      for (let i = 0; i < p.count; i++) if (Math.abs(p.getX(i) - x) < 0.35) top = Math.max(top, p.getY(i));
+      expect(top, `x=${x}`).toBeGreaterThanOrEqual(arch + 0.4);
+    }
+  });
+});

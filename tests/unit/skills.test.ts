@@ -85,4 +85,16 @@ describe('skills', () => {
     expect(sb).toContain('"diorama"');
     expect(sb).toContain('"fairytale"');
   });
+  it('최종 리뷰: 동화 키트 문서 — variant 안내, diorama·fairytale·pastel 안내, islandEdge', () => {
+    const mods = readFileSync(join(ROOT, 'skills', 'scene-modules', 'SKILL.md'), 'utf8');
+    expect(mods).toMatch(/variant: i/);
+    const ft = readFileSync(join(ROOT, 'skills', 'scene-modules', 'references', 'fairytale.md'), 'utf8');
+    expect(ft).toContain('islandEdge');
+    const sb = readFileSync(join(ROOT, 'skills', 'scene-direct', 'references', 'storyboard.md'), 'utf8');
+    expect(sb).not.toMatch(/perspective 장면은 `"camera": "free"`/);
+    expect(sb).toMatch(/"kit".*"fairytale"/);
+    const schema = readFileSync(join(ROOT, 'skills', 'scene-direct', 'references', 'scene-schema.md'), 'utf8');
+    expect(schema).toContain('pastel');
+    expect(readFileSync(join(ROOT, 'scripts', 'init.mjs'), 'utf8')).toMatch(/stylized\|minimal\|clay\|pastel/);
+  });
 });

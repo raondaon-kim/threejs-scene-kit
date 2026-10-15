@@ -38,9 +38,11 @@
 ## 앵커
 
 ```ts
-import { bridgeOn, lane, type XZ } from './kit/anchors';
+import { bridgeOn, islandEdge, lane, type XZ } from './kit/anchors';
 
-const RIVER: XZ[] = [[-4, -12], [-2, -4], [2, 4], [1, 14], [0, 26]];
+const FALL = islandEdge(30, 90);                                                          // 섬 앞 가장자리 바깥
+const RIVER: XZ[] = [[-4, -12], [-2, -4], [2, 4], [1, 14], [FALL.at[0], FALL.at[2]]];
+add({ id: 'fall', type: 'waterfall', ...FALL, params: { height: 14 } });
 add({ id: 'river', type: 'river', params: { points: RIVER, width: 3 } });
 add({ id: 'bridge', type: 'bridge', ...bridgeOn(RIVER, 2), params: { span: 5 } });      // 점 2에서 강을 가로지름
 add({ id: 'bank-path', type: 'path', params: { points: lane(RIVER, 3.5) } });            // 강 오른쪽 둑길
@@ -49,7 +51,8 @@ add({ id: 'castle', type: 'castle', at: [0, 5, -18] });                         
 
 - `bridgeOn(points, i)`: i는 1..n−2 (양 끝 점 불가). 결과 `{ at, rotation }`.
 - 높은 단 위: `at.y = plateau의 height`.
-- 폭포: 강 끝점을 섬 가장자리(반지름 근처)에 두고 같은 위치에 `waterfall`, `rotation`으로 바깥을 향하게.
+- 폭포: **`islandEdge(radius, angleDeg)`** 로 절벽 바위 바깥 지점을 얻어 강 끝점과 `waterfall`을 같은 곳에 둔다(바깥을 향하는 rotation 포함). 반지름 근처에 직접 두면 튀어나온 절벽 바위에 묻힌다. angleDeg: 0 = +X, 90 = +Z(카메라 정면).
+- 높은 단의 절벽 바위는 radius + 약 1.5m까지 나온다 → 주변 건물은 그보다 바깥에.
 
 ## 구도 (원근 디오라마)
 

@@ -6,7 +6,7 @@ import { KIT_DIR, pluginVersion, TEMPLATE_DIR } from './lib/paths.mjs';
 
 const STYLES = ['stylized', 'minimal', 'clay', 'pastel'];
 const HELP = `
-사용법: node init.mjs <폴더> [--style stylized|minimal|clay] [--force]
+사용법: node init.mjs <폴더> [--style stylized|minimal|clay|pastel] [--force]
   새 영상 프로젝트를 만든다 (template + kit 복사, kit/manifest.json 생성).
   --force  비어 있지 않은 폴더에도 진행. 기존 scene.ts와 custom/은 보존한다.
   npm install은 하지 않는다 (출력의 next 참고).

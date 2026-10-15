@@ -17,7 +17,7 @@ export const plateau = defineElement({
     for (let i = 0; i < rows; i++) {
       const y = Math.min(h - 0.25 - size * 1.45, i * size * 0.8);
       // rockRing의 세로 흔들림(±0.1·size)만큼 띄워 바닥 아래로 내려가지 않게
-      rockRing(parts, rng, r * (0.98 - i * 0.015), Math.max(0, y) + size * 0.11, size);
+      rockRing(parts, rng, r * (0.98 - i * 0.015), Math.max(0, y) + size * 0.11, size, 'rock', h - 0.3);
     }
     const built = buildByRole(ctx.style, parts);
     return { object3d: built.group, dispose: built.dispose };

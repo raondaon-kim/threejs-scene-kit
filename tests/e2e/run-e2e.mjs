@@ -211,8 +211,9 @@ step('clay: render final 0.5초 = 1920×1080×15 (Review Focus 5)', () => {
 const FT = join(ROOT, 'tests', '.e2e', 'fairytale');
 const FT_GOLDEN = join(ROOT, 'tests', 'golden', 'fairytale_preview.png');
 const FT_SCENE = `import { defineScene } from './kit/runtime/scene';
-import { bridgeOn, type XZ } from './kit/anchors';
-const RIVER: XZ[] = [[0, -8], [-1, 0], [1, 8], [0, 15.6]];
+import { bridgeOn, islandEdge, type XZ } from './kit/anchors';
+const FALL = islandEdge(16, 90);
+const RIVER: XZ[] = [[0, -8], [-1, 0], [1, 8], [FALL.at[0], FALL.at[2]]];
 export default defineScene({
   meta: { width: 1920, height: 1080, fps: 30, duration: 4, seed: 4 },
   style: 'pastel',
@@ -222,7 +223,7 @@ export default defineScene({
     { id: 'plateau', type: 'plateau', at: [0, 0, -10], params: { radius: 5, height: 4 } },
     { id: 'castle', type: 'castle', at: [0, 4, -11], params: { size: 7 } },
     { id: 'river', type: 'river', params: { points: RIVER, width: 2.4 } },
-    { id: 'fall', type: 'waterfall', at: [0, 0, 15.6], params: { height: 10, width: 2.6 } },
+    { id: 'fall', type: 'waterfall', ...FALL, params: { height: 10, width: 2.6 } },
     { id: 'bridge', type: 'bridge', ...bridgeOn(RIVER, 1), params: { span: 4 } },
     { id: 'cottage', type: 'cottage', at: [-8, 0, 2], rotation: [0, 20, 0] },
     { id: 'mush', type: 'mushroom', at: [-6, 0, 8] },

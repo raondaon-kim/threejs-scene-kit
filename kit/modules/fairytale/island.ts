@@ -17,7 +17,7 @@ export const island = defineElement({
     const k = R / 30;
     const parts: Part[] = [{ role: 'ground', geo: slab(outline(R, rng), 0.25, 0, 0.25) }];
     // 절벽: 위쪽 세 층은 거의 수직(두꺼운 절벽), 그 아래는 안쪽으로 좁아진다.
-    // 덩어리 높이는 최대 size·1.45 → 각 층 꼭대기를 위 층과 겹치게 쌓는다.
+    // 각 층 꼭대기를 위 층과 겹치게 쌓고, 잔디 윗면(0) 위로는 나오지 않게 상한(-0.05)을 둔다.
     let yTop = -0.15;
     let i = 0;
     while (yTop > -D + 1 && i < 12) {
@@ -26,7 +26,7 @@ export const island = defineElement({
       const r = vertical ? R * (0.995 - i * 0.025) : R * (0.92 - f * 0.72);
       const size = Math.max(1.4, (vertical ? 4.2 : 3.6 - f * 1.6) * k);
       const y0 = yTop - size * 1.3;
-      rockRing(parts, rng, r, y0, size);
+      rockRing(parts, rng, r, y0, size, 'rock', -0.05);
       yTop = y0 + size * 0.5;
       i++;
     }

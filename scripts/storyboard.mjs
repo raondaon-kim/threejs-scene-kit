@@ -14,7 +14,7 @@ const HELP = `
                      "shots": [{ "id": "s1", "at": 2.5, "prompt": "샷 내용(영문)" }] }
   기본으로 프롬프트에 키트 목록(vocab)과 고정 아이소 카메라(camera)를 넣는다.
   끄기: "vocab": "free", "camera": "free" (전역 또는 shots[] 단위, 샷 값 우선)
-  camera 제약은 ortho 장면용(perspective면 free). 키트 목록은 "kit"으로 장면에 맞춘다 (안 맞으면 warnings로 알림)
+  camera: iso는 ortho 장면용, diorama는 원근 디오라마용, 그 밖의 원근 장면은 free. 키트 목록은 "kit"으로 장면에 맞춘다 (안 맞으면 warnings로 알림)
   "kit": "logistics"(기본) | "concept" | "fairytale" | [여러 개] — kit/modules/*/vocab.json의 키트
   "camera": "iso"(기본, ortho) | "diorama"(원근 미니어처) | "free"
   codex 위치: CODEX_EXE → PATH → VS Code/Cursor 확장 동봉본.  샷 하나에 보통 1~2분.
@@ -40,7 +40,7 @@ function constraintWarnings(dir, sb, shots) {
     warnings.push(`scene.ts에 선택한 키트(${sb.kits.join(', ')})의 요소가 없는데 키트 목록 제약(vocab)이 켜져 있음. storyboard.json "kit"을 장면에 맞추거나 "vocab": "free"`);
   }
   if (!isOrtho && shots.some((s) => (s.camera ?? sb.camera ?? 'iso') === 'iso')) {
-    warnings.push('scene.ts가 ortho가 아닌데 아이소 카메라 제약(camera)이 켜져 있음. perspective 장면이면 storyboard.json에 "camera": "free"');
+    warnings.push('scene.ts가 ortho가 아닌데 아이소 카메라 제약(camera)이 켜져 있음. 원근 디오라마면 "camera": "diorama", 그 밖의 원근 장면이면 "camera": "free"');
   }
   if (isOrtho && shots.some((s) => (s.camera ?? sb.camera ?? 'iso') === 'diorama')) {
     warnings.push('scene.ts가 ortho인데 원근 디오라마 카메라 제약(camera: "diorama")이 켜져 있음. 아이소 장면이면 "camera": "iso"');

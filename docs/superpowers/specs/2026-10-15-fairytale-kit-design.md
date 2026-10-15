@@ -42,7 +42,7 @@ clay 파이프라인(LOOK 동일: 그림자·GTAO·IBL·neutral 톤매핑, bloom
 | neutral | #ddd3c8 | 다리·성벽 돌 |
 | label | #4a3a55 | 라벨 |
 
-하늘(모든 프리셋 공통 기반, dusk만 더 따뜻하게): top #a9b8ee, horizon #f6c9d6, bottom #e9d6f0, sun #fff0d6, fog #f3d9e4, ambient #fff4ec, sunIntensity 2.4, ambientIntensity 0.6, sunDir [-0.6, 0.55, 0.35]. fogDensity 0.0008.
+하늘(모든 프리셋 공통 기반, dusk만 더 따뜻하게): top #a9b8ee, horizon #f6c9d6, bottom #c9cff2, sun #fff0d6, fog #f3d9e4, ambient #fff4ec, sunIntensity 2.4, ambientIntensity 0.6, sunDir [-0.6, 0.55, 0.35]. fogDensity 0.0008.
 `StyleName`에 `'pastel'`, init.mjs STYLES에 pastel.
 
 ## 3. 부품 추가 (`kit/parts`)
