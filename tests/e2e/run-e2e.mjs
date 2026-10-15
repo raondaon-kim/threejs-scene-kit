@@ -72,8 +72,8 @@ step('golden', () => {
   if (d > 2) throw new Error(`골든 대비 평균 차이 ${d.toFixed(3)} > 2`);
   return `meanDiff=${d.toFixed(3)}`;
 });
-step('render 1s', () => {
-  const out = script('render.mjs', ['--project', PROJ, '--from', '5', '--to', '6', '--out', 'out/e2e.mp4']);
+step('render final 1s', () => {
+  const out = script('render.mjs', ['--project', PROJ, '--quality', 'final', '--from', '5', '--to', '6', '--out', 'out/e2e.mp4']);
   const p = spawnSync('ffprobe', ['-v', 'error', '-count_frames', '-select_streams', 'v:0', '-show_entries', 'stream=nb_read_frames,width,height', '-of', 'csv=p=0', out.file], { encoding: 'utf8' });
   const [w, h, n] = p.stdout.trim().split(',').map(Number);
   if (w !== 1080 || h !== 1920 || n !== 30) throw new Error(`ffprobe: ${p.stdout.trim()}`);
@@ -143,6 +143,68 @@ step('fail-fast: ffmpeg가 없으면 render가 즉시 보고', () => {
   if (r.timedOut || !r.out) throw new Error(`종료되지 않거나 JSON 없음 (${r.ms}ms)`);
   if (r.out.ok !== false || !r.out.errors.some((e) => e.path === 'ffmpeg')) throw new Error(JSON.stringify(r.out));
   return `${r.ms}ms`;
+});
+
+// ── v0.2: clay 물류 미니 장면 (ortho, follow, param 트랙, 그림자·AO 파이프라인) ──
+const CLAY = join(ROOT, 'tests', '.e2e', 'clay');
+const CLAY_GOLDEN = join(ROOT, 'tests', 'golden', 'clay_preview.png');
+const CLAY_SCENE = `import { defineScene } from './kit/runtime/scene';
+export default defineScene({
+  meta: { width: 1920, height: 1080, fps: 30, duration: 4, seed: 3, projection: 'ortho' },
+  style: 'clay',
+  environment: { ground: { size: 200 } },
+  elements: [
+    { id: 'lot', type: 'lot', at: [0, 0, 8], params: { width: 26, depth: 10, role: 'neutral' } },
+    { id: 'road', type: 'road', params: { points: [[-40, 16], [0, 16], [30, 10]], width: 6 } },
+    { id: 'wh', type: 'warehouse', params: { width: 18, depth: 10, height: 6, docks: 3, skylights: 2 } },
+    { id: 'truck', type: 'truck', params: { length: 8 }, follow: { path: [[-40, 15], [0, 15], [30, 9.4]], t0: 0, t1: 4, ease: 'linear' } },
+    { id: 'fork', type: 'forklift', at: [-6, 0, 9], params: { load: true }, tracks: { 'param.lift': [[0.5, 0], [2.5, 1]] } },
+    { id: 'pal', type: 'pallet', at: [-9, 0, 8], params: { cargo: 'crates' } },
+    { id: 'cont', type: 'container', at: [11, 0, 6], params: { length: 6 } },
+    { id: 'tree', type: 'tree', at: [-12, 0, 12] },
+    { id: 'bld', type: 'building', at: [0, 0, -14], params: { floors: 3 } },
+    { id: 'pin', type: 'pin', at: [0, 7, 0], params: { size: 2.4 } },
+  ],
+  shots: [{ id: 'a', start: 0, end: 4, camera: { move: 'static', pos: [45, 67, 78], target: [0, 0, 4], size: 34, sizeTo: 30 } }],
+});
+`;
+step('clay: 프로젝트 준비 + check', () => {
+  rmSync(join(CLAY, 'scene.ts'), { force: true });
+  script('init.mjs', [CLAY, '--style', 'clay', '--force']);
+  if (!existsSync(join(CLAY, 'node_modules'))) symlinkSync(join(PROJ, 'node_modules'), join(CLAY, 'node_modules'), 'junction');
+  writeFileSync(join(CLAY, 'scene.ts'), CLAY_SCENE);
+  return script('check.mjs', ['--project', CLAY]).gpu;
+});
+step('clay: still + golden', () => {
+  const cur = script('still.mjs', ['--project', CLAY, '--at', '2']).files[0];
+  if (!existsSync(CLAY_GOLDEN)) {
+    copyFileSync(cur, CLAY_GOLDEN);
+    return '기준 이미지 생성 (눈으로 검수 후 커밋)';
+  }
+  const d = meanDiff(CLAY_GOLDEN, cur);
+  if (d > 2) throw new Error(`clay 골든 대비 평균 차이 ${d.toFixed(3)} > 2`);
+  return `meanDiff=${d.toFixed(3)}`;
+});
+step('clay: seek 순서와 무관 (Review Focus 1)', () => {
+  const a = script('still.mjs', ['--project', CLAY, '--at', '3']).files[0];
+  copyFileSync(a, `${a}.direct.png`);
+  const files = script('still.mjs', ['--project', CLAY, '--at', '1,0.2,3']).files;
+  const d = meanDiff(`${a}.direct.png`, files[2]);
+  if (d > 0.5) throw new Error(`t=3 직접 vs 다른 시점 후 t=3 차이 ${d}`);
+  return `meanDiff=${d.toFixed(4)}`;
+});
+const probe = (file) => spawnSync('ffprobe', ['-v', 'error', '-count_frames', '-select_streams', 'v:0', '-show_entries', 'stream=nb_read_frames,width,height', '-of', 'csv=p=0', file], { encoding: 'utf8' }).stdout.trim().split(',').map(Number);
+step('clay: render preview 1초 = 960×540×30', () => {
+  const out = script('render.mjs', ['--project', CLAY, '--from', '0', '--to', '1']);
+  const [w, h, n] = probe(out.file);
+  if (out.quality !== 'preview' || w !== 960 || h !== 540 || n !== 30) throw new Error(`${out.quality} ${w}x${h} ${n}`);
+  return `${out.perFrameMs}ms/frame`;
+});
+step('clay: render final 0.5초 = 1920×1080×15 (Review Focus 5)', () => {
+  const out = script('render.mjs', ['--project', CLAY, '--quality', 'final', '--from', '1', '--to', '1.5', '--out', 'out/final-e2e.mp4']);
+  const [w, h, n] = probe(out.file);
+  if (out.quality !== 'final' || w !== 1920 || h !== 1080 || n !== 15) throw new Error(`${out.quality} ${w}x${h} ${n}`);
+  return `${out.perFrameMs}ms/frame`;
 });
 
 console.log(failed ? `\n${failed} FAILED` : '\nALL PASSED');
