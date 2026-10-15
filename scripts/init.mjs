@@ -4,7 +4,7 @@ import { writeManifest } from './lib/manifest.mjs';
 import { run, ScriptError } from './lib/output.mjs';
 import { KIT_DIR, pluginVersion, TEMPLATE_DIR } from './lib/paths.mjs';
 
-const STYLES = ['stylized', 'minimal', 'clay'];
+const STYLES = ['stylized', 'minimal', 'clay', 'pastel'];
 const HELP = `
 사용법: node init.mjs <폴더> [--style stylized|minimal|clay] [--force]
   새 영상 프로젝트를 만든다 (template + kit 복사, kit/manifest.json 생성).

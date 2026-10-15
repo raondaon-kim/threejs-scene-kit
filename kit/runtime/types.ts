@@ -6,16 +6,18 @@ export type Vec3 = [number, number, number];
 
 export type Role =
   | 'ground' | 'foliage' | 'trunk' | 'water' | 'accent' | 'accent2' | 'accent3' | 'neutral' | 'label'
-  | 'body' | 'bodyLight' | 'trim' | 'dark' | 'road' | 'cargo' | 'wood';
+  | 'body' | 'bodyLight' | 'trim' | 'dark' | 'road' | 'cargo' | 'wood'
+  | 'rock' | 'roof' | 'roofAlt';
 export const ALL_ROLES: readonly Role[] = [
   'ground', 'foliage', 'trunk', 'water', 'accent', 'accent2', 'accent3', 'neutral', 'label',
   'body', 'bodyLight', 'trim', 'dark', 'road', 'cargo', 'wood',
+  'rock', 'roof', 'roofAlt',
 ];
 /** 장면 요소(params.role)에 쓸 수 있는 역할 */
 export const ELEMENT_ROLES: readonly Role[] = ALL_ROLES;
 
-export type StyleName = 'stylized' | 'minimal' | 'clay';
-export const STYLE_NAMES: readonly StyleName[] = ['stylized', 'minimal', 'clay'];
+export type StyleName = 'stylized' | 'minimal' | 'clay' | 'pastel';
+export const STYLE_NAMES: readonly StyleName[] = ['stylized', 'minimal', 'clay', 'pastel'];
 
 export type SkyPreset = 'dawn' | 'day' | 'dusk' | 'night';
 export const SKY_PRESETS: readonly SkyPreset[] = ['dawn', 'day', 'dusk', 'night'];

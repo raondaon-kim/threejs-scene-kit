@@ -26,6 +26,18 @@ describe('styles', () => {
       w.dispose();
     });
   }
+  it('v0.3: 모든 스타일에 rock/roof/roofAlt, pastel 팔레트·하늘', () => {
+    for (const n of ['stylized', 'minimal', 'clay', 'pastel'] as const) {
+      const s = getStyle(n);
+      for (const r of ['rock', 'roof', 'roofAlt'] as const) expect(s.palette[r], `${n}.${r}`).toMatch(/^#[0-9a-f]{6}$/i);
+    }
+    const p = getStyle('pastel');
+    expect(p.palette.ground).toBe('#9cc97a');
+    expect(p.palette.roofAlt).toBe('#a98ae0');
+    expect(p.look.shadows).toBe(true);
+    for (const pr of SKY_PRESETS) expect(p.sky(pr).horizon).toMatch(/^#[0-9a-f]{6}$/i);
+    expect(p.sky('day').horizon).toBe('#f6c9d6');
+  });
   it('stylized는 툰, minimal은 standard', () => {
     expect(getStyle('stylized').material('ground')).toBeInstanceOf(THREE.MeshToonMaterial);
     expect(getStyle('minimal').material('ground')).toBeInstanceOf(THREE.MeshStandardMaterial);
