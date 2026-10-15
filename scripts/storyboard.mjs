@@ -2,7 +2,7 @@ import { spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { findCodex, runCodex } from './lib/codex.mjs';
-import { CAMERA_ISO, KIT_VOCAB, vocabSentence } from './lib/kit-vocab.mjs';
+import { CAMERA_ISO, kitTypes, vocabSentence } from './lib/kit-vocab.mjs';
 import { run, ScriptError } from './lib/output.mjs';
 import { resolveProject } from './lib/project.mjs';
 
@@ -30,7 +30,7 @@ function constraintWarnings(dir, sb, shots) {
   const file = join(dir, 'scene.ts');
   if (!existsSync(file)) return [];
   const src = readFileSync(file, 'utf8');
-  const types = Object.keys(KIT_VOCAB).join('|');
+  const types = kitTypes(['logistics']).join('|');
   const hasKit = new RegExp(`type\\s*:\\s*['"\`](${types})['"\`]`).test(src);
   const isOrtho = /projection\s*:\s*['"`]ortho['"`]/.test(src);
   const warnings = [];

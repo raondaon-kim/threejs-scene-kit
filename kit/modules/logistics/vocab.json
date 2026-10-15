@@ -1,0 +1,16 @@
+{
+  "label": "물류·도시",
+  "objects": {
+    "warehouse": "a warehouse with loading docks",
+    "truck": "box trucks and vans",
+    "forklift": "yellow forklifts",
+    "pallet": "pallets with cardboard boxes or blue crates",
+    "container": "shipping containers",
+    "road": "roads with a dashed center line",
+    "lot": "paved lots",
+    "tree": "round lollipop trees and cone trees",
+    "pin": "blue map pins",
+    "building": "simple office buildings"
+  },
+  "avoid": ["cars", "people", "text", "logos", "distant towns", "water", "bridges"]
+}
