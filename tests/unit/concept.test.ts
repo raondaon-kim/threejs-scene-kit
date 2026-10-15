@@ -64,7 +64,7 @@ describe('concept elements', () => {
 describe('registry', () => {
   it('내장 요소와 grow 지원 정보', () => {
     const info = typeInfo(elementRegistry());
-    expect([...info.keys()].sort()).toEqual(['arrow', 'bars', 'label', 'line', 'shape']);
+    expect([...info.keys()].sort()).toEqual(['arrow', 'bars', 'building', 'container', 'forklift', 'label', 'line', 'lot', 'pallet', 'pin', 'road', 'shape', 'tree', 'truck', 'warehouse']);
     expect(info.get('arrow')!.supportsGrow).toBe(true);
     expect(info.get('shape')!.supportsGrow).toBe(false);
   });

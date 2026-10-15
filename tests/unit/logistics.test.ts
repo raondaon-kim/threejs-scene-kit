@@ -1,0 +1,65 @@
+import { describe, it, expect } from 'vitest';
+import * as THREE from 'three';
+import { getStyle } from '../../kit/styles';
+import { LOGISTICS_ELEMENTS } from '../../kit/modules/logistics';
+import { elementRegistry } from '../../kit/runtime/registry';
+import type { KitContext } from '../../kit/runtime/types';
+
+const ctx: KitContext = { style: getStyle('clay'), rng: () => () => 0.5, heightAt: () => 0, quality: 'preview', camera: new THREE.PerspectiveCamera() };
+const byType = Object.fromEntries(LOGISTICS_ELEMENTS.map((e) => [e.type, e]));
+
+describe('logistics kit', () => {
+  it('10종 등록', () => {
+    expect(Object.keys(byType).sort()).toEqual(['building', 'container', 'forklift', 'lot', 'pallet', 'pin', 'road', 'tree', 'truck', 'warehouse']);
+    for (const t of Object.keys(byType)) expect(elementRegistry().has(t)).toBe(true);
+  });
+  for (const type of ['warehouse', 'truck', 'forklift', 'pallet', 'container', 'lot', 'tree', 'pin', 'building']) {
+    it(`${type}: 기본 생성, 바닥 원점, dispose`, () => {
+      const h = byType[type].create(ctx, {});
+      h.update?.(1.5);
+      const box = new THREE.Box3().setFromObject(h.object3d);
+      expect(box.min.y).toBeGreaterThanOrEqual(-0.01);
+      expect(box.min.y).toBeLessThan(0.6);
+      expect(box.getSize(new THREE.Vector3()).length()).toBeGreaterThan(0.5);
+      h.dispose();
+    });
+  }
+  it('road: 중복 점에서도 유한, 점 1개는 오류 (Review Focus 3)', () => {
+    const h = byType.road.create(ctx, { points: [[0, 0], [0, 0], [20, 0]] });
+    h.object3d.traverse((o) => {
+      const m = o as THREE.Mesh;
+      if (m.isMesh) expect(Array.from(m.geometry.attributes.position.array as Float32Array).every(Number.isFinite)).toBe(true);
+    });
+    expect(() => byType.road.create(ctx, { points: [[0, 0]] })).toThrow();
+    h.dispose();
+  });
+  it('truck travel → 바퀴 회전, 값으로 결정', () => {
+    const h = byType.truck.create(ctx, {});
+    expect(byType.truck.animatable).toContain('travel');
+    h.setParam!('travel', 3.14);
+    const wheel = h.object3d.getObjectByName('wheel')!;
+    const a = wheel.rotation.x;
+    h.setParam!('travel', 0);
+    h.setParam!('travel', 3.14);
+    expect(wheel.rotation.x).toBe(a);
+    expect(a).not.toBe(0);
+    h.dispose();
+  });
+  it('forklift lift → 캐리지 높이 (Review Focus 1)', () => {
+    const h = byType.forklift.create(ctx, {});
+    const c = h.object3d.getObjectByName('carriage')!;
+    h.setParam!('lift', 0);
+    const y0 = c.position.y;
+    h.setParam!('lift', 1);
+    expect(c.position.y).toBeGreaterThan(y0 + 1);
+    h.setParam!('lift', 0);
+    expect(c.position.y).toBe(y0);
+    h.dispose();
+  });
+  it('잘못된 params', () => {
+    expect(() => byType.pallet.create(ctx, { cargo: 'gold' })).toThrow(/boxes/);
+    expect(() => byType.container.create(ctx, { length: 7 })).toThrow();
+    expect(() => byType.truck.create(ctx, { kind: 'bus' })).toThrow();
+    expect(() => byType.tree.create(ctx, { kind: 'palm' })).toThrow();
+  });
+});

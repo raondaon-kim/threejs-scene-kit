@@ -3,10 +3,11 @@ import { bars } from '../modules/concept/bars';
 import { label } from '../modules/concept/label';
 import { line } from '../modules/concept/line';
 import { shape } from '../modules/concept/shape';
+import { LOGISTICS_ELEMENTS } from '../modules/logistics';
 import type { ElementType } from './types';
 import type { TypeInfo } from './validate';
 
-export const BUILTIN_ELEMENTS: readonly ElementType[] = [shape, label, arrow, bars, line];
+export const BUILTIN_ELEMENTS: readonly ElementType[] = [shape, label, arrow, bars, line, ...LOGISTICS_ELEMENTS];
 
 export function elementRegistry(custom: ElementType[] = []): Map<string, ElementType> {
   const m = new Map<string, ElementType>();
