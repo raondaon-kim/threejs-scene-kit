@@ -22,6 +22,29 @@ function oneOf(err: Err, path: string, v: unknown, allowed: readonly string[]) {
   if (!allowed.includes(v as string)) err(path, `'${String(v)}'은 지원하지 않음. 가능: ${list(allowed)}`);
 }
 
+/** 오타로 인해 조용히 무시되는 설정을 막는다. params 내부는 요소마다 다르므로 검사하지 않는다. */
+function knownKeys(err: Err, o: Obj, base: string, allowed: readonly string[]) {
+  for (const k of Object.keys(o)) {
+    if (!allowed.includes(k)) err(base ? `${base}.${k}` : k, `'${k}'은 알 수 없는 항목 (오타?). 가능: ${list(allowed)}`);
+  }
+}
+
+const KEYS = {
+  root: ['meta', 'style', 'environment', 'elements', 'shots', 'custom'],
+  meta: ['width', 'height', 'fps', 'duration', 'seed'],
+  environment: ['sky', 'terrain', 'trees', 'water'],
+  sky: ['preset'],
+  terrain: ['size', 'height', 'roughness', 'flatRadius'],
+  trees: ['count', 'area', 'avoidCenter'],
+  water: ['level', 'size'],
+  element: ['id', 'type', 'at', 'rotation', 'scale', 'params', 'enter', 'exit', 'tracks'],
+  cue: ['t', 'anim', 'dur'],
+  shot: ['id', 'start', 'end', 'camera'],
+  static: ['move', 'pos', 'target', 'fov'],
+  dolly: ['move', 'from', 'to', 'target', 'targetTo', 'ease', 'fov'],
+  orbit: ['move', 'center', 'radius', 'height', 'fromDeg', 'toDeg', 'ease', 'fov'],
+} as const;
+
 function numIn(err: Err, o: Obj | undefined, base: string, key: string, min: number, max: number, integer = false) {
   if (!o || o[key] === undefined) return;
   const v = o[key];
@@ -33,6 +56,10 @@ function numIn(err: Err, o: Obj | undefined, base: string, key: string, min: num
 function validateEnvironment(env: unknown, err: Err) {
   if (env === undefined) return;
   if (!isObj(env)) return err('environment', '객체여야 함');
+  knownKeys(err, env, 'environment', KEYS.environment);
+  for (const k of ['sky', 'terrain', 'trees', 'water'] as const) {
+    if (isObj(env[k])) knownKeys(err, env[k], `environment.${k}`, KEYS[k]);
+  }
   if (env.sky !== undefined) {
     if (!isObj(env.sky)) err('environment.sky', '객체여야 함');
     else if (env.sky.preset !== undefined) oneOf(err, 'environment.sky.preset', env.sky.preset, SKY_PRESETS);
@@ -61,6 +88,7 @@ function validateElements(els: unknown, types: Map<string, TypeInfo>, duration: 
   els.forEach((e: unknown, i) => {
     const p = `elements[${i}]`;
     if (!isObj(e)) return err(p, '객체여야 함');
+    knownKeys(err, e, p, KEYS.element);
     if (typeof e.id !== 'string' || !e.id) err(`${p}.id`, '비어 있지 않은 문자열이어야 함');
     else if (ids.has(e.id)) err(`${p}.id`, `'${e.id}' 중복`);
     else ids.add(e.id);
@@ -81,6 +109,7 @@ function validateElements(els: unknown, types: Map<string, TypeInfo>, duration: 
         err(cp, '객체여야 함');
         continue;
       }
+      knownKeys(err, c, cp, KEYS.cue);
       if (!isNum(c.t) || c.t < 0 || c.t > duration) err(`${cp}.t`, `0 ~ ${duration}초 사이여야 함`);
       if (!ANIMS.includes(c.anim)) oneOf(err, `${cp}.anim`, c.anim, ANIMS);
       else if (c.anim === 'grow' && info && !info.supportsGrow) err(`${cp}.anim`, `'${e.type}'은 grow를 지원하지 않음`);
@@ -143,6 +172,7 @@ function validateCamera(c: unknown, p: string, err: Err) {
     default:
       return oneOf(err, `${p}.move`, c.move, CAMERA_MOVES);
   }
+  knownKeys(err, c, p, c.move === 'static' ? KEYS.static : c.move === 'orbit' ? KEYS.orbit : KEYS.dolly);
   if (c.ease !== undefined) oneOf(err, `${p}.ease`, c.ease, EASES);
   if (c.fov !== undefined && (!isNum(c.fov) || c.fov < 10 || c.fov > 120)) err(`${p}.fov`, '10 ~ 120 사이여야 함');
 }
@@ -153,6 +183,7 @@ function validateShots(shots: unknown, duration: number, err: Err) {
   shots.forEach((sh: unknown, i) => {
     const p = `shots[${i}]`;
     if (!isObj(sh)) return err(p, '객체여야 함');
+    knownKeys(err, sh, p, KEYS.shot);
     if (typeof sh.id !== 'string' || !sh.id) err(`${p}.id`, '비어 있지 않은 문자열이어야 함');
     else if (ids.has(sh.id)) err(`${p}.id`, `'${sh.id}' 중복`);
     else ids.add(sh.id);
@@ -182,10 +213,12 @@ export function validateScene(input: unknown, types: Map<string, TypeInfo>): Iss
     err('', '장면 정의가 객체가 아님 (export default defineScene({...}) 확인)');
     return issues;
   }
+  knownKeys(err, input, '', KEYS.root);
   let duration = Infinity;
   const m = input.meta;
   if (!isObj(m)) err('meta', '필수 항목 누락');
   else {
+    knownKeys(err, m, 'meta', KEYS.meta);
     for (const k of ['width', 'height', 'fps', 'duration'] as const) {
       if (!isNum(m[k]) || m[k] <= 0) err(`meta.${k}`, '0보다 큰 숫자여야 함');
     }

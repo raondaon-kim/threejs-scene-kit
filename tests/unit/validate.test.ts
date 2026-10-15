@@ -82,6 +82,26 @@ describe('validateScene', () => {
   it('객체가 아니면 즉시 보고', () => {
     expect(paths(null)).toEqual(['']);
   });
+  it('알 수 없는 키(오타)는 오류 — params 내부는 제외', () => {
+    const s = good() as any;
+    s.enviroment = {};
+    s.environment.tree = { count: 10 };
+    s.environment.terrain.hieght = 3;
+    s.elements[0].enterr = { t: 1, anim: 'fade' };
+    s.elements[0].enter.durr = 1;
+    s.elements[0].params = { anything: 1 };
+    s.shots[0].cam = {};
+    s.shots[1].camera.raduis = 3;
+    s.meta.fsp = 30;
+    const p = paths(s);
+    expect(p).toEqual(expect.arrayContaining([
+      'enviroment', 'environment.tree', 'environment.terrain.hieght', 'elements[0].enterr',
+      'elements[0].enter.durr', 'shots[0].cam', 'shots[1].camera.raduis', 'meta.fsp',
+    ]));
+    expect(p).not.toContain('elements[0].params.anything');
+    const msg = validateScene(s, types).find((i) => i.path === 'environment.tree')!.message;
+    expect(msg).toContain('trees');
+  });
   it('환경 수치 범위', () => {
     const s = good() as any;
     s.environment.trees = { count: 99999 };

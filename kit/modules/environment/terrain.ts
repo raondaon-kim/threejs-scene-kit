@@ -7,7 +7,8 @@ export function createTerrain(
   field: { heightAt(x: number, z: number): number },
   size: number,
 ): ElementHandle {
-  const segs = ctx.quality === 'final' ? 160 : 90;
+  // 분할 수는 quality와 무관하게 고정: still(preview)로 확인한 형태가 최종 렌더와 같아야 한다.
+  const segs = 140;
   const geo = new THREE.PlaneGeometry(size, size, segs, segs);
   geo.rotateX(-Math.PI / 2);
   const pos = geo.attributes.position as THREE.BufferAttribute;

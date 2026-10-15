@@ -87,6 +87,17 @@ describe('sky/terrain/water', () => {
     expect(geo.attributes.color).toBeDefined();
     h.dispose();
   });
+  it('terrain 지오메트리는 quality와 무관 (스틸 = 최종본)', () => {
+    const field = createHeightField(4, TERRAIN_DEFAULTS);
+    const a = createTerrain({ style, quality: 'preview' }, field, 200);
+    const b = createTerrain({ style, quality: 'final' }, field, 200);
+    const pa = (a.object3d as THREE.Mesh).geometry.attributes.position.array;
+    const pb = (b.object3d as THREE.Mesh).geometry.attributes.position.array;
+    expect(pa.length).toBe(pb.length);
+    expect(Array.from(pa)).toEqual(Array.from(pb));
+    a.dispose();
+    b.dispose();
+  });
   it('water update(t)는 시간 순수함수', () => {
     const h = createWater({ style }, { level: -1, size: 100 });
     const pos = (h.object3d as THREE.Mesh).geometry.attributes.position;
