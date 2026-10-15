@@ -51,6 +51,12 @@ describe('init / update', () => {
     expect(forced.out.skipped).toContain('scene.ts');
   });
 
+  it('init: clay 스타일', () => {
+    const { out } = runScript('init.mjs', [dir, '--style', 'clay']);
+    expect(out.ok).toBe(true);
+    expect(readFileSync(join(dir, 'scene.ts'), 'utf8')).toContain("style: 'clay'");
+  });
+
   it('init: 잘못된 style, 인자 없음', () => {
     expect(runScript('init.mjs', [dir, '--style', 'anime']).out.ok).toBe(false);
     expect(runScript('init.mjs', []).out.ok).toBe(false);
