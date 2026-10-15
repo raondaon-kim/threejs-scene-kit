@@ -67,7 +67,7 @@ async function waitForKit(page, logs, failed) {
 }
 
 /** 캡처 모드로 장면 페이지를 연다. 렌더러(WebGL) 초기화가 실패할 때만 SwiftShader로 폴백. */
-export async function openKit(dir, { quality }) {
+export async function openKit(dir, { quality, ss }) {
   const { chromium } = await importFromProject(dir, 'playwright');
   const srv = await startServer(dir);
   let lastError = null;
@@ -90,7 +90,7 @@ export async function openKit(dir, { quality }) {
       page.on('response', (r) => {
         if (r.status() >= 400) failed.push(r.url());
       });
-      await page.goto(`${srv.url}?capture=1&quality=${quality}`, { waitUntil: 'load', timeout: READY_TIMEOUT_MS });
+      await page.goto(`${srv.url}?capture=1&quality=${quality}${ss ? `&ss=${ss}` : ''}`, { waitUntil: 'load', timeout: READY_TIMEOUT_MS });
       await waitForKit(page, logs, failed);
       const status = await page.evaluate(() => window.__KIT__.ready);
       if (!status.ok && status.errors.some((e) => e.path === 'renderer')) {

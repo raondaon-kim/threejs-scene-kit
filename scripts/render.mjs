@@ -7,8 +7,10 @@ import { run, ScriptError } from './lib/output.mjs';
 import { resolveProject } from './lib/project.mjs';
 
 const HELP = `
-사용법: node render.mjs [--project <폴더>] [--from 초] [--to 초] [--out out/video.mp4]
-  원본 해상도로 프레임(t = i/fps)을 캡처해 ffmpeg(H.264, yuv420p, crf 18)로 인코딩한다.
+사용법: node render.mjs [--project <폴더>] [--quality preview|final] [--ss 2] [--from 초] [--to 초] [--out 경로]
+  기본은 preview(절반 해상도, 빠름) → out/video-preview.mp4.
+  --quality final: 원본 해상도, SSAA(기본 2배 렌더 후 축소), 고품질 그림자·AO → out/video.mp4.
+  프레임(t = i/fps)을 캡처해 ffmpeg(H.264, yuv420p, crf 18)로 인코딩한다.
   프레임 수 = round((to - from) * fps). 시스템 PATH에 ffmpeg 필요.
   실패하면 만들다 만 파일은 지운다.
 `;
@@ -23,7 +25,10 @@ function assertFfmpeg() {
 run(async ({ opts }) => {
   const dir = resolveProject(opts.project);
   assertFfmpeg();
-  const kit = await openKit(dir, { quality: 'final' });
+  const quality = opts.quality === 'final' ? 'final' : 'preview';
+  const ss = opts.ss !== undefined ? Number(opts.ss) : undefined;
+  if (ss !== undefined && (!Number.isFinite(ss) || ss < 1 || ss > 4)) throw new ScriptError([{ path: 'args.ss', message: '1 ~ 4 사이 숫자여야 함' }]);
+  const kit = await openKit(dir, { quality, ss });
   let ff = null;
   let file = null;
   try {
@@ -36,7 +41,7 @@ run(async ({ opts }) => {
     }
     const f0 = Math.round(from * info.fps);
     const f1 = Math.round(to * info.fps);
-    file = typeof opts.out === 'string' ? resolve(dir, opts.out) : join(dir, 'out', 'video.mp4');
+    file = typeof opts.out === 'string' ? resolve(dir, opts.out) : join(dir, 'out', quality === 'final' ? 'video.mp4' : 'video-preview.mp4');
     mkdirSync(dirname(file), { recursive: true });
     ff = spawn('ffmpeg', [
       '-y', '-loglevel', 'error', '-f', 'image2pipe', '-framerate', String(info.fps), '-i', '-',
@@ -70,7 +75,7 @@ run(async ({ opts }) => {
     if (code !== 0) throw new ScriptError([{ path: 'ffmpeg', message: `ffmpeg 실패(code ${code}): ${ffErr.trim()}` }]);
     ff = null;
     const seconds = (Date.now() - started) / 1000;
-    return { file, frames: f1 - f0, fps: info.fps, seconds, perFrameMs: Math.round((seconds * 1000) / (f1 - f0)), gpu: kit.gpu, warnings: kit.logs };
+    return { file, quality, frames: f1 - f0, fps: info.fps, seconds, perFrameMs: Math.round((seconds * 1000) / (f1 - f0)), gpu: kit.gpu, warnings: kit.logs };
   } catch (e) {
     if (ff) {
       ff.stdin.destroy();

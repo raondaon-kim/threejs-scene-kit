@@ -75,6 +75,16 @@ describe('init / update', () => {
     rmSync(dir, { recursive: true, force: true });
   });
 
+  it('update: vite.config.ts 같은 인프라 파일도 갱신, scene.ts는 보존', () => {
+    runScript('init.mjs', [dir]);
+    writeFileSync(join(dir, 'vite.config.ts'), '// old');
+    writeFileSync(join(dir, 'scene.ts'), '// mine');
+    const r = runScript('update.mjs', ['--project', dir]);
+    expect(r.out.ok).toBe(true);
+    expect(readFileSync(join(dir, 'vite.config.ts'), 'utf8')).toContain('optimizeDeps');
+    expect(readFileSync(join(dir, 'scene.ts'), 'utf8')).toBe('// mine');
+  });
+
   it('--help는 사용법 출력 후 exit 0', () => {
     const r = spawnSync(process.execPath, [join(ROOT, 'scripts', 'init.mjs'), '--help'], { encoding: 'utf8' });
     expect(r.status).toBe(0);

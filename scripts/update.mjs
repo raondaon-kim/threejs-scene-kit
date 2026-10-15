@@ -1,13 +1,14 @@
-import { cpSync, rmSync } from 'node:fs';
+import { copyFileSync, cpSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { diffManifest, readManifest, writeManifest } from './lib/manifest.mjs';
 import { run, ScriptError } from './lib/output.mjs';
-import { KIT_DIR, pluginVersion } from './lib/paths.mjs';
+import { KIT_DIR, pluginVersion, TEMPLATE_DIR } from './lib/paths.mjs';
 import { resolveProject } from './lib/project.mjs';
 
 const HELP = `
 사용법: node update.mjs [--project <폴더>] [--force]
-  프로젝트의 kit/을 플러그인 최신 버전으로 교체한다.
+  프로젝트의 kit/을 플러그인 최신 버전으로 교체하고, 인프라 파일(vite.config.ts, index.html, tsconfig.json)도 갱신한다.
+  scene.ts, package.json, custom/, storyboard/는 건드리지 않는다.
   kit 파일을 로컬에서 수정했다면 목록을 보여주고 거부한다 (--force로 덮어쓰기).
 `;
 
@@ -26,5 +27,7 @@ run(async ({ opts }) => {
   rmSync(kitDir, { recursive: true, force: true });
   cpSync(KIT_DIR, kitDir, { recursive: true });
   const next = writeManifest(kitDir, pluginVersion());
-  return { project: dir, from: manifest.version, to: next.version, overwritten: touched };
+  const infra = ['vite.config.ts', 'index.html', 'tsconfig.json'];
+  for (const f of infra) copyFileSync(join(TEMPLATE_DIR, f), join(dir, f));
+  return { project: dir, from: manifest.version, to: next.version, overwritten: touched, infra };
 }, HELP);

@@ -1,0 +1,8 @@
+{
+  "aspect": "16:9",
+  "style": "premium isometric 3D clay render, monochrome blue and white palette, soft studio lighting, soft shadows, ambient occlusion, light lavender ground, rounded edges, clean minimal, no text, no UI, no logos, no people.",
+  "shots": [
+    { "id": "s1", "at": 2.5, "prompt": "Wide isometric view of a blue warehouse with loading docks, white trucks on a curved road, round trees, blue map pins." },
+    { "id": "s2", "at": 7.5, "prompt": "Closer isometric view of the loading docks: trucks backing in, a yellow forklift carrying a pallet of boxes." }
+  ]
+}

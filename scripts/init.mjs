@@ -52,6 +52,7 @@ run(async ({ pos, opts }) => {
     next: [
       `npm install --prefix "${dir}"`,
       `npm exec --prefix "${dir}" -- playwright install chromium   (프로젝트 폴더의 npx playwright install chromium과 같음, 최초 1회)`,
+      `(선택) storyboard.example.json을 storyboard.json으로 복사·수정 후 storyboard.mjs --project "${dir}"`,
       `check.mjs --project "${dir}"`,
     ],
   };
