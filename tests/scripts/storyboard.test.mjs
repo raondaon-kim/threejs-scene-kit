@@ -39,4 +39,29 @@ describe('storyboard.mjs (가짜 codex)', () => {
     writeFileSync(join(dir, 'storyboard.json'), '{"shots":[]}');
     expect(run(['--project', dir]).out.ok).toBe(false);
   });
+  const prompts = () => Object.fromEntries(JSON.parse(readFileSync(join(dir, 'storyboard', 'log.json'), 'utf8')).map((e) => [e.id, e.prompt]));
+  it('기본: Camera·Objects 줄을 Style 뒤, Content 앞에 주입 (A-1)', () => {
+    expect(run(['--project', dir, '--shot', 's1']).code).toBe(0);
+    const p = prompts().s1;
+    expect(p).toMatch(/^Camera: Orthographic isometric view/m);
+    expect(p).toMatch(/^Objects: Only depict objects from this list: .*yellow forklifts/m);
+    expect(p.indexOf('Style:')).toBeLessThan(p.indexOf('Camera:'));
+    expect(p.indexOf('Camera:')).toBeLessThan(p.indexOf('Objects:'));
+    expect(p.indexOf('Objects:')).toBeLessThan(p.indexOf('Content:'));
+  });
+  it('전역 free + 샷 단위 덮어쓰기 (Review Focus 4)', () => {
+    writeFileSync(join(dir, 'storyboard.json'), JSON.stringify({ aspect: '16:9', style: 'clay', vocab: 'free', camera: 'free', shots: [{ id: 's1', prompt: 'a', camera: 'iso' }, { id: 's2', prompt: 'b', vocab: 'kit' }] }));
+    expect(run(['--project', dir]).code).toBe(0);
+    const p = prompts();
+    expect(p.s1).toMatch(/^Camera:/m);
+    expect(p.s1).not.toMatch(/^Objects:/m);
+    expect(p.s2).not.toMatch(/^Camera:/m);
+    expect(p.s2).toMatch(/^Objects:/m);
+  });
+  it('잘못된 vocab/camera 값 거부', () => {
+    writeFileSync(join(dir, 'storyboard.json'), JSON.stringify({ aspect: '16:9', style: 'clay', vocab: 'all', shots: [{ id: 's1', prompt: 'a', camera: 'top' }] }));
+    const { code, out } = run(['--project', dir]);
+    expect(code).toBe(1);
+    expect(out.errors.map((e) => e.path)).toEqual(expect.arrayContaining(['storyboard.vocab', 'storyboard.shots[0].camera']));
+  });
 });

@@ -2,6 +2,7 @@ import { spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { findCodex, runCodex } from './lib/codex.mjs';
+import { CAMERA_ISO, vocabSentence } from './lib/kit-vocab.mjs';
 import { run, ScriptError } from './lib/output.mjs';
 import { resolveProject } from './lib/project.mjs';
 
@@ -11,8 +12,17 @@ const HELP = `
   storyboard/sheet.png(전체 시트)와 storyboard/log.json을 남긴다.
   storyboard.json: { "aspect": "16:9"|"9:16", "style": "공통 스타일(영문)",
                      "shots": [{ "id": "s1", "at": 2.5, "prompt": "샷 내용(영문)" }] }
+  기본으로 프롬프트에 키트 목록(vocab)과 고정 아이소 카메라(camera)를 넣는다.
+  끄기: "vocab": "free", "camera": "free" (전역 또는 shots[] 단위, 샷 값 우선)
   codex 위치: CODEX_EXE → PATH → VS Code/Cursor 확장 동봉본.  샷 하나에 보통 1~2분.
 `;
+
+const MODES = { vocab: ['kit', 'free'], camera: ['iso', 'free'] };
+const modeError = (obj, path, errors) => {
+  for (const [k, allowed] of Object.entries(MODES)) {
+    if (obj?.[k] !== undefined && !allowed.includes(obj[k])) errors.push({ path: `${path}.${k}`, message: `${allowed.map((a) => `'${a}'`).join(' 또는 ')}이어야 함` });
+  }
+};
 
 function loadStoryboard(dir) {
   const file = join(dir, 'storyboard.json');
@@ -27,6 +37,7 @@ function loadStoryboard(dir) {
   if (!['16:9', '9:16'].includes(sb.aspect)) errors.push({ path: 'storyboard.aspect', message: "'16:9' 또는 '9:16'이어야 함" });
   if (typeof sb.style !== 'string' || !sb.style) errors.push({ path: 'storyboard.style', message: '공통 스타일 문자열이 필요함' });
   if (!Array.isArray(sb.shots) || sb.shots.length === 0) errors.push({ path: 'storyboard.shots', message: '샷이 1개 이상 필요함' });
+  modeError(sb, 'storyboard', errors);
   const ids = new Set();
   (Array.isArray(sb.shots) ? sb.shots : []).forEach((s, i) => {
     if (typeof s?.id !== 'string' || !/^[A-Za-z0-9-]+$/.test(s.id)) errors.push({ path: `storyboard.shots[${i}].id`, message: '영문·숫자·대시로 된 id가 필요함' });
@@ -34,6 +45,7 @@ function loadStoryboard(dir) {
     else ids.add(s.id);
     if (typeof s?.prompt !== 'string' || !s.prompt) errors.push({ path: `storyboard.shots[${i}].prompt`, message: '샷 설명이 필요함' });
     if (s?.at !== undefined && (typeof s.at !== 'number' || !Number.isFinite(s.at))) errors.push({ path: `storyboard.shots[${i}].at`, message: '숫자(초)여야 함' });
+    modeError(s, `storyboard.shots[${i}]`, errors);
   });
   if (errors.length) throw new ScriptError(errors);
   return sb;
@@ -41,9 +53,13 @@ function loadStoryboard(dir) {
 
 function promptFor(sb, shot) {
   const orient = sb.aspect === '16:9' ? 'landscape 16:9' : 'portrait 9:16';
+  const camera = shot.camera ?? sb.camera ?? 'iso';
+  const vocab = shot.vocab ?? sb.vocab ?? 'kit';
   return [
     `Generate exactly ONE image with your image generation tool, then save it as storyboard/${shot.id}.png inside the current directory (create the folder if needed). The saved PNG must be ${orient}. Do not write any other files.`,
     `Style: ${sb.style}`,
+    ...(camera === 'iso' ? [`Camera: ${CAMERA_ISO}`] : []),
+    ...(vocab === 'kit' ? [`Objects: ${vocabSentence()}`] : []),
     `Content: ${shot.prompt}`,
     'When finished, reply with only the saved file path.',
   ].join('\n');
