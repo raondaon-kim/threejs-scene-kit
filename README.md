@@ -58,3 +58,7 @@ npm run e2e         # 실제 브라우저: init → check → still → 결정�
 ```
 
 설계: `docs/superpowers/specs/2026-10-15-threejs-scene-kit-design.md`
+
+## 라이선스
+
+MIT — [LICENSE](LICENSE)
