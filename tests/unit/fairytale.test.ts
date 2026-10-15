@@ -9,8 +9,13 @@ import { rock } from '../../kit/modules/fairytale/rock';
 import { river } from '../../kit/modules/fairytale/river';
 import { waterfall } from '../../kit/modules/fairytale/waterfall';
 import { path } from '../../kit/modules/fairytale/path';
+import { castle } from '../../kit/modules/fairytale/castle';
+import { cottage } from '../../kit/modules/fairytale/cottage';
+import { mushroom } from '../../kit/modules/fairytale/mushroom';
+import { windmill } from '../../kit/modules/fairytale/windmill';
+import { bridge } from '../../kit/modules/fairytale/bridge';
 
-const BY: Record<string, ElementType> = { island, plateau, rock, river, waterfall, path };
+const BY: Record<string, ElementType> = { island, plateau, rock, river, waterfall, path, castle, cottage, mushroom, windmill, bridge };
 
 const ctx: KitContext = { style: getStyle('pastel'), rng: (s) => rngFor(7, s), heightAt: () => 0, quality: 'preview', camera: new THREE.PerspectiveCamera() };
 const verts = (o: THREE.Object3D) => {
@@ -72,5 +77,56 @@ describe('fairytale 지형', () => {
     h.update?.(9);
     h.update?.(3);
     expect(ys()).toEqual(a);
+  });
+});
+
+describe('fairytale 건물', () => {
+  it.each(['castle', 'cottage', 'mushroom', 'windmill', 'bridge'])('%s: 기본 생성, 바닥 원점, 크기, dispose', (t) => {
+    const h = BY[t].create(ctx, {});
+    h.update?.(1.2);
+    const b = bbox(h.object3d);
+    expect(b.min.y).toBeGreaterThanOrEqual(-0.05);
+    expect(b.min.y).toBeLessThan(0.6);
+    expect(b.getSize(new THREE.Vector3()).length()).toBeGreaterThan(2);
+    expect(verts(h.object3d).every(Number.isFinite)).toBe(true);
+    h.dispose();
+  });
+  it('castle: 탑 지붕은 roofAlt, 성문(dark)', () => {
+    const h = BY.castle.create(ctx, { towers: 4 });
+    expect(h.object3d.getObjectByName('roofAlt')).toBeTruthy();
+    expect(h.object3d.getObjectByName('dark')).toBeTruthy();
+  });
+  it('cottage: roof 선택, 잘못된 값 오류', () => {
+    expect(BY.cottage.create(ctx, { roof: 'roofAlt' }).object3d.getObjectByName('roofAlt')).toBeTruthy();
+    expect(() => BY.cottage.create(ctx, { roof: 'gold' })).toThrow(/roof/);
+  });
+  it('mushroom: 빨간 갓(accent2) + 흰 점(trim)', () => {
+    const o = BY.mushroom.create(ctx, {}).object3d;
+    expect(o.getObjectByName('accent2')).toBeTruthy();
+    expect(o.getObjectByName('trim')).toBeTruthy();
+  });
+  it('windmill: 날개 각 = t·speed·2π, seek 순서 무관 (Review Focus 3)', () => {
+    const h = BY.windmill.create(ctx, { speed: 0.25 });
+    const sails = h.object3d.getObjectByName('sails')!;
+    h.update!(2);
+    const a = sails.rotation.z;
+    h.update!(7);
+    h.update!(2);
+    expect(sails.rotation.z).toBeCloseTo(a, 9);
+    expect(Math.abs(a)).toBeCloseTo((2 * 0.25 * 2 * Math.PI) % (2 * Math.PI), 6);
+  });
+  it('castle 깃발: seek 순서 무관', () => {
+    const h = BY.castle.create(ctx, {});
+    const f = h.object3d.getObjectByName('flags')!;
+    h.update!(1.5);
+    const a = f.children.map((c) => c.rotation.y);
+    h.update!(4);
+    h.update!(1.5);
+    expect(f.children.map((c) => c.rotation.y)).toEqual(a);
+  });
+  it('bridge: 로컬 X로 걸침 (span 반영)', () => {
+    const b = bbox(BY.bridge.create(ctx, { span: 7 }).object3d);
+    expect(b.max.x - b.min.x).toBeGreaterThan(7);
+    expect(b.max.z - b.min.z).toBeLessThan(4);
   });
 });
