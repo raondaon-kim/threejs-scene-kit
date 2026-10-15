@@ -19,7 +19,8 @@
 
 - Node 22 이상
 - 시스템 PATH의 ffmpeg (render용)
-- 영상 프로젝트에서 `npm install` 시 three, vite, playwright(Chromium)가 설치됨
+- 영상 프로젝트에서 `npm install`로 three, vite, playwright 패키지 설치
+- Chromium은 별도 설치: `npm exec --prefix <프로젝트> -- playwright install chromium` (최초 1회. 이미 캐시가 있으면 생략 가능)
 
 ## 설치
 
@@ -33,7 +34,8 @@ claude --plugin-dir D:\omnivoice\threejs-scene-kit
 
 ```
 node scripts/init.mjs my-video --style stylized
-cd my-video && npm install
+npm install --prefix my-video
+npm exec --prefix my-video -- playwright install chromium
 node <플러그인>/scripts/check.mjs --project my-video
 node <플러그인>/scripts/still.mjs --project my-video --at 1,5,9 --sheet
 node <플러그인>/scripts/render.mjs --project my-video        # → my-video/out/video.mp4

@@ -49,6 +49,10 @@ run(async ({ pos, opts }) => {
     style,
     kitVersion: manifest.version,
     skipped,
-    next: [`프로젝트 폴더에서 npm install`, `check.mjs --project "${dir}"`],
+    next: [
+      `npm install --prefix "${dir}"`,
+      `npm exec --prefix "${dir}" -- playwright install chromium   (프로젝트 폴더의 npx playwright install chromium과 같음, 최초 1회)`,
+      `check.mjs --project "${dir}"`,
+    ],
   };
 }, HELP);

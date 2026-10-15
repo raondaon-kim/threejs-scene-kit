@@ -27,7 +27,8 @@ allowed-tools:
 
 ```
 node "${CLAUDE_PLUGIN_ROOT}/scripts/init.mjs" <폴더> --style stylized     # 새 프로젝트 (stylized|minimal)
-(프로젝트 폴더에서) npm install                                         # 처음 한 번
+npm install --prefix "<폴더>"                                          # 처음 한 번
+npm exec --prefix "<폴더>" -- playwright install chromium               # 처음 한 번 (Chromium 없으면 check가 안내)
 node "${CLAUDE_PLUGIN_ROOT}/scripts/check.mjs" --project <폴더>           # 검증
 node "${CLAUDE_PLUGIN_ROOT}/scripts/still.mjs" --project <폴더> --at 1,4,8 --sheet   # 확인
 node "${CLAUDE_PLUGIN_ROOT}/scripts/render.mjs" --project <폴더>          # 최종 MP4 → out/video.mp4

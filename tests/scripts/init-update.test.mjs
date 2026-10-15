@@ -32,6 +32,13 @@ describe('init / update', () => {
     expect(Object.keys(m.files)).toContain('runtime/world.ts');
   });
 
+  it('init: 다음 단계에 npm install과 Chromium 설치를 단독 명령으로 안내', () => {
+    const { out } = runScript('init.mjs', [dir]);
+    const next = out.next.join('\n');
+    expect(next).toContain(`npm install --prefix "${dir}"`);
+    expect(next).toContain('npx playwright install chromium');
+  });
+
   it('init: 비어 있지 않으면 거부, --force는 scene.ts 보존', () => {
     runScript('init.mjs', [dir]);
     writeFileSync(join(dir, 'scene.ts'), '// my scene');

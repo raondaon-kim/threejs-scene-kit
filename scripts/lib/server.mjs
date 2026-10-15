@@ -19,7 +19,8 @@ export async function startServer(dir) {
   const port = await freePort();
   const server = await vite.createServer({
     root: dir,
-    logLevel: 'error',
+    // stdout/stderr를 깨끗하게 유지 (오류는 브라우저 응답에서 수집해 JSON으로 보고)
+    logLevel: 'silent',
     clearScreen: false,
     server: { port, strictPort: true, host: '127.0.0.1', open: false },
   });
