@@ -2,7 +2,7 @@ import { spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { findCodex, runCodex } from './lib/codex.mjs';
-import { CAMERA_ISO, KIT_VOCAB, vocabSentence } from './lib/kit-vocab.mjs';
+import { CAMERA_ISO, kitTypes, loadKits, vocabSentence } from './lib/kit-vocab.mjs';
 import { run, ScriptError } from './lib/output.mjs';
 import { resolveProject } from './lib/project.mjs';
 
@@ -14,7 +14,8 @@ const HELP = `
                      "shots": [{ "id": "s1", "at": 2.5, "prompt": "샷 내용(영문)" }] }
   기본으로 프롬프트에 키트 목록(vocab)과 고정 아이소 카메라(camera)를 넣는다.
   끄기: "vocab": "free", "camera": "free" (전역 또는 shots[] 단위, 샷 값 우선)
-  제약은 물류 키트·ortho 장면 전용. 개념·강의(perspective) 장면은 둘 다 free (안 맞으면 warnings로 알림)
+  camera 제약은 ortho 장면용(perspective면 free). 키트 목록은 "kit"으로 장면에 맞춘다 (안 맞으면 warnings로 알림)
+  "kit": "logistics"(기본) | "concept" | [여러 개] — kit/modules/*/vocab.json의 키트
   codex 위치: CODEX_EXE → PATH → VS Code/Cursor 확장 동봉본.  샷 하나에 보통 1~2분.
 `;
 
@@ -30,12 +31,12 @@ function constraintWarnings(dir, sb, shots) {
   const file = join(dir, 'scene.ts');
   if (!existsSync(file)) return [];
   const src = readFileSync(file, 'utf8');
-  const types = Object.keys(KIT_VOCAB).join('|');
+  const types = kitTypes(sb.kits).join('|');
   const hasKit = new RegExp(`type\\s*:\\s*['"\`](${types})['"\`]`).test(src);
   const isOrtho = /projection\s*:\s*['"`]ortho['"`]/.test(src);
   const warnings = [];
   if (!hasKit && shots.some((s) => (s.vocab ?? sb.vocab ?? 'kit') === 'kit')) {
-    warnings.push('scene.ts에 물류 키트 요소가 없는데 키트 목록 제약(vocab)이 켜져 있음. 개념·강의 장면이면 storyboard.json에 "vocab": "free"');
+    warnings.push(`scene.ts에 선택한 키트(${sb.kits.join(', ')})의 요소가 없는데 키트 목록 제약(vocab)이 켜져 있음. storyboard.json "kit"을 장면에 맞추거나 "vocab": "free"`);
   }
   if (!isOrtho && shots.some((s) => (s.camera ?? sb.camera ?? 'iso') === 'iso')) {
     warnings.push('scene.ts가 ortho가 아닌데 아이소 카메라 제약(camera)이 켜져 있음. perspective 장면이면 storyboard.json에 "camera": "free"');
@@ -57,6 +58,11 @@ function loadStoryboard(dir) {
   if (typeof sb.style !== 'string' || !sb.style) errors.push({ path: 'storyboard.style', message: '공통 스타일 문자열이 필요함' });
   if (!Array.isArray(sb.shots) || sb.shots.length === 0) errors.push({ path: 'storyboard.shots', message: '샷이 1개 이상 필요함' });
   modeError(sb, 'storyboard', errors);
+  const names = [...loadKits().keys()];
+  const kits = sb.kit === undefined ? ['logistics'] : Array.isArray(sb.kit) ? sb.kit : [sb.kit];
+  if (!kits.length || !kits.every((k) => typeof k === 'string' && names.includes(k))) {
+    errors.push({ path: 'storyboard.kit', message: `키트 이름 또는 1개 이상의 배열이어야 함. 사용 가능: ${names.join(', ')}` });
+  } else sb.kits = kits;
   const ids = new Set();
   (Array.isArray(sb.shots) ? sb.shots : []).forEach((s, i) => {
     if (typeof s?.id !== 'string' || !/^[A-Za-z0-9-]+$/.test(s.id)) errors.push({ path: `storyboard.shots[${i}].id`, message: '영문·숫자·대시로 된 id가 필요함' });
@@ -78,7 +84,7 @@ function promptFor(sb, shot) {
     `Generate exactly ONE image with your image generation tool, then save it as storyboard/${shot.id}.png inside the current directory (create the folder if needed). The saved PNG must be ${orient}. Do not write any other files.`,
     `Style: ${sb.style}`,
     ...(camera === 'iso' ? [`Camera: ${CAMERA_ISO}`] : []),
-    ...(vocab === 'kit' ? [`Objects: ${vocabSentence()}`] : []),
+    ...(vocab === 'kit' ? [`Objects: ${vocabSentence(sb.kits)}`] : []),
     `Content: ${shot.prompt}`,
     'When finished, reply with only the saved file path.',
   ].join('\n');

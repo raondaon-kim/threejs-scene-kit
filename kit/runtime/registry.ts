@@ -1,13 +1,9 @@
-import { arrow } from '../modules/concept/arrow';
-import { bars } from '../modules/concept/bars';
-import { label } from '../modules/concept/label';
-import { line } from '../modules/concept/line';
-import { shape } from '../modules/concept/shape';
+import { CONCEPT_ELEMENTS } from '../modules/concept';
 import { LOGISTICS_ELEMENTS } from '../modules/logistics';
 import type { ElementType } from './types';
 import type { TypeInfo } from './validate';
 
-export const BUILTIN_ELEMENTS: readonly ElementType[] = [shape, label, arrow, bars, line, ...LOGISTICS_ELEMENTS];
+export const BUILTIN_ELEMENTS: readonly ElementType[] = [...CONCEPT_ELEMENTS, ...LOGISTICS_ELEMENTS];
 
 export function elementRegistry(custom: ElementType[] = []): Map<string, ElementType> {
   const m = new Map<string, ElementType>();

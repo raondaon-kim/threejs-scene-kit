@@ -1,0 +1,11 @@
+{
+  "label": "개념 시각화",
+  "objects": {
+    "shape": "simple geometric solids (boxes, spheres, cylinders, cones, tori)",
+    "label": "short text labels",
+    "arrow": "3D arrows",
+    "bars": "3D bar charts",
+    "line": "smooth curved tube lines"
+  },
+  "avoid": ["people", "logos", "photorealistic scenery"]
+}

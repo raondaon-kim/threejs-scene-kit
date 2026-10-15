@@ -23,13 +23,20 @@ Codex CLI(`codex exec`)의 이미지 생성으로 샷별 콘셉트 이미지를 
 | shots[].at | `still --compare`에서 렌더할 장면 시각(초). 보통 해당 scene 샷의 중간 |
 | shots[].prompt | 샷 내용(영문). 등장 오브젝트·카메라 거리·배치를 구체적으로 |
 
-## 자동 제약 (기본 켜짐, 물류 키트·ortho 장면 전용)
+## 자동 제약 (기본 켜짐)
 
 모든 샷 프롬프트에 두 줄이 자동으로 들어간다 (Style 뒤, Content 앞).
-**개념·강의 장면(라벨·도형·그래프, perspective)은 `"vocab": "free", "camera": "free"`로 끈다.** 장면과 맞지 않으면 storyboard 출력 `warnings`가 알려준다.
+장면과 맞지 않으면 storyboard 출력 `warnings`가 알려준다.
 
-- `Camera:` 렌더와 같은 고정 아이소 카메라 (ortho, 정면 오른쪽 30°, 고도 약 37° = `target + [45, 67, 78]`)
-- `Objects:` 키트에 있는 물체만 허용 + 승용차·사람·글자·원경 마을·물·다리 금지
+- `Camera:` 렌더와 같은 고정 아이소 카메라 (ortho, 정면 오른쪽 30°, 고도 약 37° = `target + [45, 67, 78]`). perspective 장면은 `"camera": "free"`.
+- `Objects:` 고른 키트(`"kit"`)에 있는 물체만 허용 + 그 키트가 금지하는 것 (logistics: 승용차·사람·글자·원경 마을·물·다리)
+
+**키트 고르기 (`"kit"`)**: 키트별 문구는 `kit/modules/<키트>/vocab.json`.
+
+- 물류·도시 장면: `"kit": "logistics"` (기본)
+- 개념·강의 장면(도형·라벨·화살표·그래프): `"kit": "concept"` (라벨 글자 허용) + perspective면 `"camera": "free"`
+  - concept이면 style 문장에서 `no text`를 뺀다 (예제 style의 "no text"가 남으면 라벨 없는 스토리보드가 나온다)
+- 여러 개 `["logistics", "concept"]`: 물체는 합치고, 금지 목록은 **교집합**(모든 키트가 금지하는 것만)
 
 끄기 (전역 또는 샷 단위, 샷 값 우선):
 
@@ -41,6 +48,7 @@ Codex CLI(`codex exec`)의 이미지 생성으로 샷별 콘셉트 이미지를 
 |---|---|---|
 | vocab | `"kit"` \| `"free"` | `"kit"` |
 | camera | `"iso"` \| `"free"` | `"iso"` |
+| kit | `"logistics"` \| `"concept"` \| `[여러 개]` (전역만) | `"logistics"` |
 
 실제로 들어간 프롬프트는 `storyboard/log.json`에서 확인한다.
 
