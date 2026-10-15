@@ -37,6 +37,9 @@ interface Item {
 
 const DEG = Math.PI / 180;
 
+/** 라벨처럼 조명을 받지 않는 오버레이(MeshBasicMaterial)는 이 레이어에 둔다. pipeline이 AO·블룸 뒤에 덮어 그린다. */
+export const OVERLAY_LAYER = 1;
+
 function collectMaterials(obj: THREE.Object3D): THREE.Material[] {
   const set = new Set<THREE.Material>();
   obj.traverse((o) => {
@@ -52,7 +55,11 @@ function setShadows(obj: THREE.Object3D, cast: boolean, receive: boolean) {
     const mesh = o as THREE.Mesh;
     if (!mesh.isMesh) return;
     const m = mesh.material as THREE.Material;
-    if ((m as THREE.MeshBasicMaterial).isMeshBasicMaterial || (m as THREE.ShaderMaterial).isShaderMaterial) return;
+    if ((m as THREE.MeshBasicMaterial).isMeshBasicMaterial) {
+      mesh.layers.set(OVERLAY_LAYER);
+      return;
+    }
+    if ((m as THREE.ShaderMaterial).isShaderMaterial) return;
     mesh.castShadow = cast;
     mesh.receiveShadow = receive;
   });
